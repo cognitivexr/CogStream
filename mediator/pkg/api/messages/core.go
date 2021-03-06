@@ -1,21 +1,29 @@
 package messages
 
+type MessageCode int
+
+// step 1
 const (
-	// step 1
-	CodeExpose  = 1
-	CodeRecord  = 2
-	CodeAnalyze = 3
+	CodeExpose MessageCode = iota + 1
+	CodeRecord
+	CodeAnalyze
+)
 
-	// step 2
-	CodeConstraints = 10
+// step 2
+const (
+	CodeConstraints MessageCode = (iota + 1) * 10
+)
 
-	// step 3
-	CodeFormat = 100
+// step 3
+const (
+	CodeFormat MessageCode = (iota + 1) * 100
+)
 
-	// step 4
-	CodeExposeAgreement  = 1000
-	CodeRecordAgreement  = 2000
-	CodeAnalyzeAgreement = 3000
+// step 4
+const (
+	CodeExposeAgreement MessageCode = (iota + 1) * 1000
+	CodeRecordAgreement
+	CodeAnalyzeAgreement
 )
 
 type Messages struct {
@@ -30,9 +38,8 @@ func (m *Messages) Add(message Message) {
 	m.messages = append(m.messages, message)
 }
 
-
 type Message interface {
-	GetCode() int
+	GetCode() MessageCode
 }
 
 type Expose struct {
@@ -70,34 +77,34 @@ type AnalyzeAgreement struct {
 	Format Format `json:"format"`
 }
 
-func (e *Expose) GetCode() int {
+func (e *Expose) GetCode() MessageCode {
 	return CodeExpose
 }
 
-func (e *Record) GetCode() int {
+func (e *Record) GetCode() MessageCode {
 	return CodeRecord
 }
 
-func (e *Analyze) GetCode() int {
+func (e *Analyze) GetCode() MessageCode {
 	return CodeAnalyze
 }
 
-func (e *Constraints) GetCode() int {
+func (e *Constraints) GetCode() MessageCode {
 	return CodeConstraints
 }
 
-func (e *Format) GetCode() int {
+func (e *Format) GetCode() MessageCode {
 	return CodeFormat
 }
 
-func (e *ExposeAgreement) GetCode() int {
+func (e *ExposeAgreement) GetCode() MessageCode {
 	return CodeExposeAgreement
 }
 
-func (e *RecordAgreement) GetCode() int {
+func (e *RecordAgreement) GetCode() MessageCode {
 	return CodeRecordAgreement
 }
 
-func (e *AnalyzeAgreement) GetCode() int {
+func (e *AnalyzeAgreement) GetCode() MessageCode {
 	return CodeAnalyzeAgreement
 }
