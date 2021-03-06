@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
-	app.InitEndpoints()
+	mh := app.NewMediatorHandler()
+	http.Handle("/", mh)
 	log.Fatal(http.ListenAndServe(":8191", nil))
 }

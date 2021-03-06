@@ -2,7 +2,6 @@ package mediator
 
 import (
 	"cognitivexr.at/cogstream/pkg/api/messages"
-	"fmt"
 	"math/rand"
 	"time"
 )
@@ -18,6 +17,10 @@ const (
 	Undefined
 )
 
+func (hs HandshakeState) Successor() HandshakeState {
+	return hs + 1
+}
+
 type Handshake struct {
 	Created  time.Time
 	Timeout  time.Duration
@@ -30,13 +33,11 @@ type HandshakeStore interface {
 	SetTimeout(time.Duration)
 	NewHandshake() *Handshake
 	Get(id string) (*Handshake, bool)
-	VerifyAndAddMessage(id string, message messages.Message) (HandshakeState, error)
 }
 
 type simpleHandshakeStore struct {
-	storage      map[string]*Handshake
-	timeout      time.Duration
-	successorMap map[HandshakeState][]messages.MessageCode
+	storage map[string]*Handshake
+	timeout time.Duration
 }
 
 func NewSimpleHandshakeStore() HandshakeStore {
@@ -47,12 +48,6 @@ func NewSimpleHandshakeStore() HandshakeStore {
 	store := &simpleHandshakeStore{
 		storage: make(map[string]*Handshake),
 		timeout: timeout,
-		successorMap: map[HandshakeState][]messages.MessageCode{
-			Empty:       {messages.CodeExpose, messages.CodeRecord, messages.CodeAnalyze},
-			Operation:   {messages.CodeConstraints},
-			Constraints: {messages.CodeFormat},
-			Format:      {messages.CodeExposeAgreement, messages.CodeRecordAgreement, messages.CodeAnalyzeAgreement},
-		},
 	}
 
 	// FIXME not ideal
@@ -89,32 +84,6 @@ func (s *simpleHandshakeStore) Get(id string) (*Handshake, bool) {
 	hs, ok := s.storage[id]
 
 	return hs, ok
-}
-func (s *simpleHandshakeStore) VerifyAndAddMessage(id string, message messages.Message) (HandshakeState, error) {
-	hs, ok := s.storage[id]
-	if !ok {
-		return Undefined, fmt.Errorf("could not find handshake with id: %v", id)
-	}
-
-	if s.isAllowedMessageForState(hs.State, message) {
-		hs.Messages.Add(message)
-	} else {
-		return Undefined, fmt.Errorf("message not allowed for state")
-	}
-
-	hs.State += 1
-
-	return hs.State, nil
-}
-
-func (s *simpleHandshakeStore) isAllowedMessageForState(state HandshakeState, message messages.Message) bool {
-	codes := s.successorMap[state]
-	for _, code := range codes {
-		if message.GetCode() == code {
-			return true
-		}
-	}
-	return false
 }
 
 func (s *simpleHandshakeStore) nextHandshakeId() string {

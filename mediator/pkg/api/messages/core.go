@@ -1,5 +1,11 @@
 package messages
 
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+)
+
 type MessageCode int
 
 // step 1
@@ -75,6 +81,76 @@ type RecordAgreement struct {
 
 type AnalyzeAgreement struct {
 	Format Format `json:"format"`
+}
+
+type Envelope struct {
+	Type MessageCode     `json:"type"`
+	Data json.RawMessage `json:"data"`
+}
+
+// TODO maybe prettier
+func UnmarshalJSONMessage(code MessageCode, data io.Reader) (Message, error) {
+	decoder := json.NewDecoder(data)
+	switch code {
+	case CodeRecord:
+		var decoded Record
+		err := decoder.Decode(&decoded)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse message: %v", err)
+		}
+		return &decoded, nil
+	case CodeAnalyze:
+		var decoded Analyze
+		err := decoder.Decode(&decoded)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse message: %v", err)
+		}
+		return &decoded, nil
+	case CodeExpose:
+		var decoded Expose
+		err := decoder.Decode(&decoded)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse message: %v", err)
+		}
+		return &decoded, nil
+	case CodeConstraints:
+		var decoded Constraints
+		err := decoder.Decode(&decoded)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse message: %v", err)
+		}
+		return &decoded, nil
+	case CodeFormat:
+		var decoded Format
+		err := decoder.Decode(&decoded)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse message: %v", err)
+		}
+		return &decoded, nil
+	case CodeRecordAgreement:
+		var decoded RecordAgreement
+		err := decoder.Decode(&decoded)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse message: %v", err)
+		}
+		return &decoded, nil
+	case CodeAnalyzeAgreement:
+		var decoded AnalyzeAgreement
+		err := decoder.Decode(&decoded)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse message: %v", err)
+		}
+		return &decoded, nil
+	case CodeExposeAgreement:
+		var decoded ExposeAgreement
+		err := decoder.Decode(&decoded)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse message: %v", err)
+		}
+		return &decoded, nil
+	default:
+		return nil, fmt.Errorf("could not parse message %v with code %v", data, code)
+	}
 }
 
 func (e *Expose) GetCode() MessageCode {
