@@ -40,7 +40,7 @@ func getVideoWriter(ctx StreamContext, src <-chan gocv.Mat) (*gocv.VideoWriter, 
 	return gocv.VideoWriterFile(fileName, "MJPG", fps, cols, rows, true)
 }
 
-func SaveVideo(ctx StreamContext, src <-chan gocv.Mat) {
+func SaveVideoSink(ctx StreamContext, src <-chan gocv.Mat) {
 	writer, err := getVideoWriter(ctx, src)
 	defer writer.Close()
 
@@ -59,7 +59,7 @@ func SaveVideo(ctx StreamContext, src <-chan gocv.Mat) {
 }
 
 // Sink to display the frames in a gocv Window
-func WindowDisplay(ctx StreamContext, src <-chan gocv.Mat) {
+func WindowDisplaySink(ctx StreamContext, src <-chan gocv.Mat) {
 	window := gocv.NewWindow("window")
 	defer window.Close()
 
