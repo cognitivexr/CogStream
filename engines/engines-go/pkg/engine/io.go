@@ -51,12 +51,20 @@ func (s *FrameScanner) Err() error {
 	return s.err
 }
 
-func (s *FrameScanner) readPacket() (data []byte, err error) {
+func readPacketHeader(r io.Reader) (int64, error) {
 	bufInt := make([]byte, 4)
-	if _, err = s.r.Read(bufInt); err != nil {
-		return
+	if _, err := r.Read(bufInt); err != nil {
+		return -1, err
 	}
-	n := int64(binary.LittleEndian.Uint32(bufInt))
+	n := binary.LittleEndian.Uint32(bufInt)
+	return int64(n), nil
+}
+
+func (s *FrameScanner) readPacket() (data []byte, err error) {
+	n, err := readPacketHeader(s.r)
+	if err != nil {
+		return nil, err
+	}
 
 	// prepare limited reader to read the packet length exactly from the underlying reader
 	if s.buf.Len() != 0 {

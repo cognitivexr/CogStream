@@ -2,18 +2,28 @@ package engine
 
 import (
 	"gocv.io/x/gocv"
+	"log"
 	"net"
 )
 
 func WindowDisplayHandler(conn net.Conn) {
 	frames := make(chan []byte, 30)
 	images := make(chan gocv.Mat)
-	ctx := NewStreamContext() // FIXME: initialize engine context
+
+	defer func () {
+		close(frames)
+		close(images)
+	}()
+
+	ctx, err := InitStreamContext(conn)
+	if err != nil {
+		log.Println("error initializing stream context", err)
+		conn.Close()
+		return
+	}
 
 	go ImageDecoder(ctx, frames, images)
 	go ConnectionHandler(ctx, conn, frames)
 	WindowDisplaySink(ctx, images)
 
-	close(frames)
-	close(images)
 }

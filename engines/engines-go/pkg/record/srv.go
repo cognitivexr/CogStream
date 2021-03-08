@@ -10,7 +10,13 @@ import (
 func SaveVideoHandler(conn net.Conn) {
 	frames := make(chan []byte, 30)
 	images := make(chan gocv.Mat)
-	ctx := engine.NewStreamContext() // FIXME: initialize engine context
+
+	ctx, err := engine.InitStreamContext(conn)
+	if err != nil {
+		log.Println("error initializing stream context", err)
+		conn.Close()
+		return
+	}
 
 	go engine.ImageDecoder(ctx, frames, images)
 	go SaveVideoSink(ctx, images)
