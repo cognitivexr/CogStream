@@ -43,6 +43,11 @@ func getVideoWriter(ctx engine.StreamContext, src <-chan gocv.Mat) (*gocv.VideoW
 
 func SaveVideoSink(ctx engine.StreamContext, src <-chan gocv.Mat) {
 	writer, err := getVideoWriter(ctx, src)
+	if err != nil {
+		log.Println("error creating video writer", err)
+		return
+	}
+
 	defer writer.Close()
 
 	for {

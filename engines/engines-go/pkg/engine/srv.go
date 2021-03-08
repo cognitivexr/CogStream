@@ -6,11 +6,12 @@ import (
 	"net"
 )
 
+// WindowDisplayHandler pipes the decoded frames into a WindowDisplaySink.
 func WindowDisplayHandler(conn net.Conn) {
 	frames := make(chan []byte, 30)
 	images := make(chan gocv.Mat)
 
-	defer func () {
+	defer func() {
 		close(frames)
 		close(images)
 	}()
