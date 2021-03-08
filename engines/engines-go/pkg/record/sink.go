@@ -1,6 +1,7 @@
-package stream
+package record
 
 import (
+	"cognitivexr.at/cogstream/engines/pkg/engine"
 	"errors"
 	"gocv.io/x/gocv"
 	"log"
@@ -8,8 +9,8 @@ import (
 )
 
 // getVideoWriter creates a new gocv VideoWriter for the given StreamContext.
-func getVideoWriter(ctx StreamContext, src <-chan gocv.Mat) (*gocv.VideoWriter, error) {
-	// FIXME: determine parameters from stream context
+func getVideoWriter(ctx engine.StreamContext, src <-chan gocv.Mat) (*gocv.VideoWriter, error) {
+	// FIXME: determine parameters from engine context
 
 	var fileName = "/tmp/go-record-" + time.Now().Format("20060102-150405") + ".avi"
 	var img gocv.Mat
@@ -18,7 +19,7 @@ func getVideoWriter(ctx StreamContext, src <-chan gocv.Mat) (*gocv.VideoWriter, 
 	// get image parameters
 	img, more = <-src
 	if !more {
-		return nil, errors.New("could not determine stream dimensions")
+		return nil, errors.New("could not determine engine dimensions")
 	}
 	cols, rows := img.Cols(), img.Rows()
 	log.Printf("determined dimensions: %d x %d\n", cols, rows)
@@ -29,7 +30,7 @@ func getVideoWriter(ctx StreamContext, src <-chan gocv.Mat) (*gocv.VideoWriter, 
 	for i := 0; i < n; i++ {
 		_, more = <-src
 		if !more {
-			return nil, errors.New("could not determine stream fps")
+			return nil, errors.New("could not determine engine fps")
 		}
 	}
 
@@ -40,7 +41,7 @@ func getVideoWriter(ctx StreamContext, src <-chan gocv.Mat) (*gocv.VideoWriter, 
 	return gocv.VideoWriterFile(fileName, "MJPG", fps, cols, rows, true)
 }
 
-func SaveVideoSink(ctx StreamContext, src <-chan gocv.Mat) {
+func SaveVideoSink(ctx engine.StreamContext, src <-chan gocv.Mat) {
 	writer, err := getVideoWriter(ctx, src)
 	defer writer.Close()
 
@@ -56,37 +57,4 @@ func SaveVideoSink(ctx StreamContext, src <-chan gocv.Mat) {
 			return
 		}
 	}
-}
-
-// Sink to display the frames in a gocv Window
-func WindowDisplaySink(ctx StreamContext, src <-chan gocv.Mat) {
-	window := gocv.NewWindow("window")
-	defer window.Close()
-
-	doneCh := make(chan bool)
-	defer func() {
-		close(doneCh)
-		log.Println("window display sink returning")
-	}()
-
-	go func() {
-		for {
-			if window.WaitKey(1000) >= 0 {
-				doneCh <- true
-				return
-			}
-		}
-	}()
-
-	for {
-		select {
-		case img := <-src:
-			window.IMShow(img)
-		case done := <-doneCh:
-			if done {
-				return
-			}
-		}
-	}
-
 }

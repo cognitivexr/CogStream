@@ -1,4 +1,4 @@
-package stream
+package engine
 
 import (
 	"gocv.io/x/gocv"

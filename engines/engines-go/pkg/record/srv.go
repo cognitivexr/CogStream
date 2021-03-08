@@ -1,6 +1,7 @@
-package stream
+package record
 
 import (
+	"cognitivexr.at/cogstream/engines/pkg/engine"
 	"gocv.io/x/gocv"
 	"log"
 	"net"
@@ -9,31 +10,18 @@ import (
 func SaveVideoHandler(conn net.Conn) {
 	frames := make(chan []byte, 30)
 	images := make(chan gocv.Mat)
-	ctx := NewStreamContext() // FIXME: initialize stream context
+	ctx := engine.NewStreamContext() // FIXME: initialize engine context
 
-	go ImageDecoder(ctx, frames, images)
+	go engine.ImageDecoder(ctx, frames, images)
 	go SaveVideoSink(ctx, images)
-	ConnectionHandler(ctx, conn, frames)
-
-	close(frames)
-	close(images)
-}
-
-func WindowDisplayHandler(conn net.Conn) {
-	frames := make(chan []byte, 30)
-	images := make(chan gocv.Mat)
-	ctx := NewStreamContext() // FIXME: initialize stream context
-
-	go ImageDecoder(ctx, frames, images)
-	go ConnectionHandler(ctx, conn, frames)
-	WindowDisplaySink(ctx, images)
+	engine.ConnectionHandler(ctx, conn, frames)
 
 	close(frames)
 	close(images)
 }
 
 // ServeSingle creates a server socket, accepts one connection, and then closes the server socket before initializing
-// the stream.
+// the engine.
 func ServeSingle(network string, address string) {
 	ln, err := net.Listen(network, address)
 	if err != nil {
