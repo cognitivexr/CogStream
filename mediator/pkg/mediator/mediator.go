@@ -24,8 +24,8 @@ func NewMediator() *Mediator {
 		},
 		messageHandlers: make(map[messages.MessageCode]func(*Handshake, messages.Message) (messages.Message, error)),
 	}
-	m.Handle(messages.CodeRecord, m.defaultReply)
-	m.Handle(messages.CodeFormat, m.defaultReply)
+	m.Handle(messages.CodeRecord, RecordMessageHandler)
+	m.Handle(messages.CodeFormat, FormatMessageHandler)
 	return m
 }
 
@@ -53,8 +53,9 @@ func (m *Mediator) ProcessMessage(id string, message messages.Message) (messages
 		return nil, fmt.Errorf("no handler for message with code %v", message.GetCode())
 	}
 	reply, err := handler(hs, message)
+	hs.Messages.Add(reply)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't create reply to message: %v", err)
+		return nil, fmt.Errorf("cannot create reply to message: %v", err)
 	}
 
 	return reply, nil
@@ -76,7 +77,7 @@ func (m *Mediator) isAllowedMessageForState(state HandshakeState, message messag
 	return false
 }
 
-func (m *Mediator) defaultReply(hs *Handshake, _ messages.Message) (messages.Message, error) {
+func (m *Mediator) defaultHandler(hs *Handshake, _ messages.Message) (messages.Message, error) {
 	hs.State = hs.State.Successor()
 	return &messages.Record{}, nil
 }

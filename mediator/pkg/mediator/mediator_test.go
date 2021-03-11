@@ -7,8 +7,8 @@ import (
 
 func TestMediator_ProcessMessage(t *testing.T) {
 	m := NewMediator()
-	m.Handle(messages.CodeRecord, m.defaultReply)
-	m.Handle(messages.CodeFormat, m.defaultReply)
+	m.Handle(messages.CodeRecord, RecordMessageHandler)
+	m.Handle(messages.CodeFormat, FormatMessageHandler)
 
 	hs := m.StartHandshake()
 	println(hs.Created.Format("2006-01-02 15:04:05"))

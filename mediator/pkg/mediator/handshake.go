@@ -22,11 +22,12 @@ func (hs HandshakeState) Successor() HandshakeState {
 }
 
 type Handshake struct {
-	Created  time.Time
-	Timeout  time.Duration
-	Id       string
-	State    HandshakeState
-	Messages *messages.Messages
+	Created        time.Time
+	Timeout        time.Duration
+	Id             string
+	InitiationCode messages.MessageCode
+	State          HandshakeState
+	Messages       *messages.Messages
 }
 
 type HandshakeStore interface {
