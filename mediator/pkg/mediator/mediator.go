@@ -2,82 +2,116 @@ package mediator
 
 import (
 	"cognitivexr.at/cogstream/pkg/api/messages"
+	"cognitivexr.at/cogstream/pkg/platform"
 	"fmt"
-	"sync"
 )
 
+type HandshakeStepHandler func(*HandshakeContext, platform.Platform) error
+
 type Mediator struct {
-	Handshakes      HandshakeStore
-	successors      map[HandshakeState][]messages.MessageCode
-	messageHandlers map[messages.MessageCode]func(*Handshake, messages.Message) (messages.Message, error)
-	handlerMutex    sync.Mutex
+	handshakes                  HandshakeStore
+	operationRequestHandlers    []HandshakeStepHandler
+	formatEstablishmentHandlers []HandshakeStepHandler
+	platform                    platform.Platform
+	handlersLocked              bool
 }
 
 func NewMediator() *Mediator {
 	m := &Mediator{
-		Handshakes: NewSimpleHandshakeStore(),
-		successors: map[HandshakeState][]messages.MessageCode{
-			Empty:       {messages.CodeExpose, messages.CodeRecord, messages.CodeAnalyze},
-			Operation:   {messages.CodeConstraints},
-			Constraints: {messages.CodeFormat},
-			Format:      {messages.CodeExposeAgreement, messages.CodeRecordAgreement, messages.CodeAnalyzeAgreement},
-		},
-		messageHandlers: make(map[messages.MessageCode]func(*Handshake, messages.Message) (messages.Message, error)),
+		handshakes:                  NewSimpleHandshakeStore(),
+		operationRequestHandlers:    make([]HandshakeStepHandler, 0),
+		formatEstablishmentHandlers: make([]HandshakeStepHandler, 0),
+		handlersLocked:              false,
+		platform:                    &platform.DummyPlatform{},
 	}
-	m.Handle(messages.CodeRecord, RecordMessageHandler)
-	m.Handle(messages.CodeFormat, FormatMessageHandler)
+
+	m.AddOperationRequestHandler(DefaultOperationHandler)
+	m.AddFormatEstablishmentHandler(DefaultFormatHandler)
+
 	return m
 }
 
-func (m *Mediator) StartHandshake() *Handshake {
-	return m.Handshakes.NewHandshake()
+func (m *Mediator) StartHandshake() *HandshakeContext {
+	if !m.handlersLocked {
+		m.handlersLocked = true
+	}
+	return m.handshakes.StartHandshake()
 }
 
-func (m *Mediator) ProcessMessage(id string, message messages.Message) (messages.Message, error) {
-	hs, ok := m.Handshakes.Get(id)
+func (m *Mediator) RequestOperation(sessionId string, spec *messages.OperationSpec) error {
+	hs, ok := m.handshakes.Get(sessionId)
 	if !ok {
-		return nil, fmt.Errorf("could not find handshake with id: %v", id)
+		return fmt.Errorf("no session with id: %v", sessionId)
+	}
+	if !hs.Ok {
+		return fmt.Errorf("state is not ok: %v", hs)
+	}
+	if hs.OperationSpec != nil || hs.EngineFormatSpec != nil || hs.ClientFormatSpec != nil || hs.StreamSpec != nil {
+		hs.Ok = false
+		return fmt.Errorf("state is not empty: %v", hs)
 	}
 
-	if !m.isAllowedMessageForState(hs.State, message) {
-		return nil, fmt.Errorf("message not allowed for state")
-	}
-	hs.Messages.Add(message)
-	hs.State = hs.State.Successor()
+	hs.OperationSpec = spec
 
-	m.handlerMutex.Lock()
-	handler := m.messageHandlers[message.GetCode()]
-	m.handlerMutex.Unlock()
-
-	if handler == nil {
-		return nil, fmt.Errorf("no handler for message with code %v", message.GetCode())
-	}
-	reply, err := handler(hs, message)
-	hs.Messages.Add(reply)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create reply to message: %v", err)
-	}
-
-	return reply, nil
-}
-
-func (m *Mediator) Handle(code messages.MessageCode, handler func(*Handshake, messages.Message) (messages.Message, error)) {
-	m.handlerMutex.Lock()
-	defer m.handlerMutex.Unlock()
-	m.messageHandlers[code] = handler
-}
-
-func (m *Mediator) isAllowedMessageForState(state HandshakeState, message messages.Message) bool {
-	codes := m.successors[state]
-	for _, code := range codes {
-		if message.GetCode() == code {
-			return true
+	for _, handler := range m.operationRequestHandlers {
+		err := handler(hs, m.platform)
+		if err != nil {
+			hs.Ok = false
+			return fmt.Errorf("cannot handle operation spec: %v", err)
 		}
 	}
-	return false
+	if hs.EngineFormatSpec == nil {
+		hs.Ok = false
+		return fmt.Errorf("no engine format set")
+	}
+
+	return nil
 }
 
-func (m *Mediator) defaultHandler(hs *Handshake, _ messages.Message) (messages.Message, error) {
-	hs.State = hs.State.Successor()
-	return &messages.Record{}, nil
+func (m *Mediator) EstablishFormat(sessionId string, spec *messages.ClientFormatSpec) error {
+	hs, ok := m.handshakes.Get(sessionId)
+	if !ok {
+		return fmt.Errorf("no session with id: %v", sessionId)
+	}
+	if !hs.Ok {
+		return fmt.Errorf("state is not ok: %v", hs)
+	}
+	if hs.OperationSpec == nil || hs.EngineFormatSpec == nil || hs.ClientFormatSpec != nil || hs.StreamSpec != nil {
+		hs.Ok = false
+		return fmt.Errorf("state is not ready for format establishment: %v", hs)
+	}
+
+	hs.ClientFormatSpec = spec
+	for _, handler := range m.formatEstablishmentHandlers {
+		err := handler(hs, m.platform)
+		if err != nil {
+			hs.Ok = false
+			return fmt.Errorf("cannot handle client format spec: %v", err)
+		}
+	}
+	if hs.StreamSpec == nil {
+		hs.Ok = false
+		return fmt.Errorf("no stream spec set")
+	}
+
+	return nil
+}
+
+func (m *Mediator) AddOperationRequestHandler(handler HandshakeStepHandler) bool {
+	if m.handlersLocked {
+		return false
+	}
+
+	m.operationRequestHandlers = append(m.operationRequestHandlers, handler)
+
+	return true
+}
+func (m *Mediator) AddFormatEstablishmentHandler(handler HandshakeStepHandler) bool {
+	if m.handlersLocked {
+		return false
+	}
+
+	m.formatEstablishmentHandlers = append(m.formatEstablishmentHandlers, handler)
+
+	return true
 }

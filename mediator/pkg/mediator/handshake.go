@@ -6,57 +6,51 @@ import (
 	"time"
 )
 
-type HandshakeState int
-
-const (
-	Empty HandshakeState = iota
-	Operation
-	Constraints
-	Format
-	Agreement
-	Undefined
-)
-
-func (hs HandshakeState) Successor() HandshakeState {
-	return hs + 1
-}
-
-type Handshake struct {
-	Created        time.Time
-	Timeout        time.Duration
-	Id             string
-	InitiationCode messages.MessageCode
-	State          HandshakeState
-	Messages       *messages.Messages
+// TODO: which fields to hide?
+type HandshakeContext struct {
+	Created          time.Time
+	Timeout          time.Duration
+	SessionId        string
+	OperationSpec    *messages.OperationSpec
+	EngineFormatSpec *messages.EngineFormatSpec
+	ClientFormatSpec *messages.ClientFormatSpec
+	StreamSpec       *messages.StreamSpec
+	Alert            *messages.Alert
+	Ok               bool
 }
 
 type HandshakeStore interface {
 	SetTimeout(time.Duration)
-	NewHandshake() *Handshake
-	Get(id string) (*Handshake, bool)
+	StartHandshake() *HandshakeContext
+	Get(id string) (*HandshakeContext, bool)
 }
 
 type simpleHandshakeStore struct {
-	storage map[string]*Handshake
+	storage map[string]*HandshakeContext
 	timeout time.Duration
 }
 
 func NewSimpleHandshakeStore() HandshakeStore {
+	//TODO: maybe replace with UUID?
 	rand.Seed(time.Now().UnixNano())
 
-	timeout, _ := time.ParseDuration("30s")
+	timeout, _ := time.ParseDuration("30m")
 
 	store := &simpleHandshakeStore{
-		storage: make(map[string]*Handshake),
+		storage: make(map[string]*HandshakeContext),
 		timeout: timeout,
 	}
 
 	// FIXME not ideal
-	go func() {
-		for range time.Tick(timeout) {
-			store.expire()
-		}
-	}()
+	//go func() {
+	//	for range time.Tick(timeout) {
+	//		store.expire()
+	//	}
+	//}()
+	// FIXED:
+	time.AfterFunc(timeout, func() {
+		store.expire()
+	})
 
 	return store
 }
@@ -65,15 +59,14 @@ func (s *simpleHandshakeStore) SetTimeout(timeout time.Duration) {
 	s.timeout = timeout
 }
 
-func (s *simpleHandshakeStore) NewHandshake() *Handshake {
-	id := s.nextHandshakeId()
+func (s *simpleHandshakeStore) StartHandshake() *HandshakeContext {
+	id := s.nextSessionId()
 
-	hs := &Handshake{
-		Created:  time.Now(),
-		Timeout:  s.timeout,
-		Id:       id,
-		State:    Empty,
-		Messages: messages.NewMessages(),
+	hs := &HandshakeContext{
+		Created:   time.Now(),
+		Timeout:   s.timeout,
+		SessionId: id,
+		Ok:        true,
 	}
 
 	s.storage[id] = hs
@@ -81,13 +74,13 @@ func (s *simpleHandshakeStore) NewHandshake() *Handshake {
 	return hs
 }
 
-func (s *simpleHandshakeStore) Get(id string) (*Handshake, bool) {
+func (s *simpleHandshakeStore) Get(id string) (*HandshakeContext, bool) {
 	hs, ok := s.storage[id]
 
 	return hs, ok
 }
 
-func (s *simpleHandshakeStore) nextHandshakeId() string {
+func (s *simpleHandshakeStore) nextSessionId() string {
 	// TODO: create random id
 	return randomString(15)
 }
