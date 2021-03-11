@@ -4,6 +4,73 @@ import (
 	"encoding/json"
 )
 
+type OperationCode string
+
+const (
+	OperationExpose  OperationCode = "expose"
+	OperationRecord  OperationCode = "record"
+	OperationAnalyze OperationCode = "analyze"
+)
+
+type MessageType int32
+
+const (
+	MessageTypeAlert MessageType = iota + 1
+	MessageTypeOperationSpec
+	MessageTypeEngineFormatSpec
+	MessageTypeClientFormatSpec
+	MessageTypeStreamSpec
+)
+
+type AlertCode int32
+
+type Attributes map[string][]string
+
+func (a Attributes) Set(key string, value string) {
+	a[key] = []string{value}
+}
+
+func (a Attributes) Get(key string) string {
+	if a == nil {
+		return ""
+	}
+	v := a[key]
+	if len(v) == 0 {
+		return ""
+	}
+	return v[0]
+}
+
+type Message2 struct {
+	// TODO
+	Type MessageType
+	Message json.RawMessage
+}
+
+type Alert struct {
+	AlertCode
+}
+
+type OperationSpec struct {
+	Operation  OperationCode
+	Attributes Attributes
+}
+
+type EngineFormatSpec struct {
+	Attributes   Attributes
+}
+
+type ClientFormatSpec struct {
+	Attributes   Attributes
+}
+
+type EngineAddress string
+
+type StreamSpec struct {
+	EngineAddress EngineAddress
+	Attributes    Attributes
+}
+
 type MessageCode int
 
 // step 1
