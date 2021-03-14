@@ -5,7 +5,7 @@ import time
 import cv2
 import numpy as np
 
-from cogstream.client import Client
+from cogstream.client import EngineClient
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def main():
 
     address = (args.host, args.port)
 
-    client = Client(address)
+    client = EngineClient(address)
 
     # FIXME perform handshake with record operation
     width = args.width
