@@ -35,7 +35,7 @@ func MarshalEngineFormatSpec(spec *messages.EngineFormatSpec) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal engine format spec: %v", err)
 	}
-	return []byte(fmt.Sprintf("{\"type\":%d,\"content\":%s", messages.MessageTypeEngineFormatSpec, string(content))), nil
+	return wrapInMessage(messages.MessageTypeEngineFormatSpec, string(content)), nil
 }
 
 func MarshalStreamSpec(spec *messages.StreamSpec) ([]byte, error) {
@@ -43,7 +43,7 @@ func MarshalStreamSpec(spec *messages.StreamSpec) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal engine format spec: %v", err)
 	}
-	return []byte(fmt.Sprintf("{\"type\":%d,\"content\":%s", messages.MessageTypeStreamSpec, string(content))), nil
+	return wrapInMessage(messages.MessageTypeStreamSpec, string(content)), nil
 }
 
 func MarshalAlert(alert *messages.Alert) ([]byte, error) {
@@ -51,5 +51,9 @@ func MarshalAlert(alert *messages.Alert) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal engine format spec: %v", err)
 	}
-	return []byte(fmt.Sprintf("{\"type\":%d,\"content\":%s", messages.MessageTypeAlert, string(content))), nil
+	return wrapInMessage(messages.MessageTypeAlert, string(content)), nil
+}
+
+func wrapInMessage(type_ messages.MessageType, content string) []byte {
+	return []byte(fmt.Sprintf("{\"type\":%d,\"content\":%s}", type_, content))
 }
