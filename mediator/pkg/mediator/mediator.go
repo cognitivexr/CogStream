@@ -2,17 +2,16 @@ package mediator
 
 import (
 	"cognitivexr.at/cogstream/pkg/api/messages"
-	"cognitivexr.at/cogstream/pkg/platform"
 	"fmt"
 )
 
-type HandshakeStepHandler func(*HandshakeContext, platform.Platform) error
+type HandshakeStepHandler func(*HandshakeContext, Platform) error
 
 type Mediator struct {
 	handshakes                  HandshakeStore
 	operationRequestHandlers    []HandshakeStepHandler
 	formatEstablishmentHandlers []HandshakeStepHandler
-	platform                    platform.Platform
+	platform                    Platform
 	handlersLocked              bool
 }
 
@@ -22,7 +21,7 @@ func NewMediator() *Mediator {
 		operationRequestHandlers:    make([]HandshakeStepHandler, 0),
 		formatEstablishmentHandlers: make([]HandshakeStepHandler, 0),
 		handlersLocked:              false,
-		platform:                    &platform.DummyPlatform{},
+		platform:                    &DummyPlatform{},
 	}
 
 	m.AddOperationRequestHandler(DefaultOperationHandler)

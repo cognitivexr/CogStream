@@ -1,11 +1,10 @@
 package mediator
 
 import (
-	"cognitivexr.at/cogstream/pkg/platform"
 	"fmt"
 )
 
-func DefaultOperationHandler(hs *HandshakeContext, platform platform.Platform) error {
+func DefaultOperationHandler(hs *HandshakeContext, platform Platform) error {
 	engineFormat, err := platform.GetEngineFormatSpec(hs)
 	if err != nil {
 		return fmt.Errorf("cannot get engine format spec: %v", err)
@@ -14,7 +13,7 @@ func DefaultOperationHandler(hs *HandshakeContext, platform platform.Platform) e
 	return nil
 }
 
-func DefaultFormatHandler(hs *HandshakeContext, platform platform.Platform) error {
+func DefaultFormatHandler(hs *HandshakeContext, platform Platform) error {
 	streamSpec, err := platform.GetStreamSpec(hs)
 	if err != nil {
 		return fmt.Errorf("cannot get engine format spec: %v", err)
