@@ -2,9 +2,11 @@ package record
 
 import (
 	"cognitivexr.at/cogstream/engines/pkg/engine"
+	"context"
 	"gocv.io/x/gocv"
 	"log"
 	"net"
+	"sync"
 )
 
 func SaveVideoHandler(conn net.Conn) error {
@@ -29,10 +31,15 @@ func SaveVideoHandler(conn net.Conn) error {
 
 // ServeSingle creates a server socket, accepts one connection, and then closes the server socket before initializing
 // the engine.
-func ServeSingle(network string, address string) error {
+func ServeSingle(ctx context.Context, network string, address string) error {
 	ln, err := net.Listen(network, address)
 	if err != nil {
 		return err
+	}
+
+	if started, ok := ctx.Value("started").(*sync.WaitGroup); started != nil && ok {
+		log.Println("started engine serving")
+		started.Done()
 	}
 
 	log.Println("accept connection on address", address)
