@@ -1,7 +1,7 @@
 package runtime
 
 import (
-	"cognitivexr.at/cogstream/pkg/api/engines"
+	"cognitivexr.at/cogstream/api/engines"
 )
 
 type EngineFinder interface {

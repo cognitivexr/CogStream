@@ -1,7 +1,7 @@
 package app
 
 import (
-	"cognitivexr.at/cogstream/pkg/api/messages"
+	"cognitivexr.at/cogstream/api/messages"
 	mediator "cognitivexr.at/cogstream/pkg/mediator"
 	"encoding/json"
 	"fmt"
