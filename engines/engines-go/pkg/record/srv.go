@@ -7,7 +7,7 @@ import (
 	"net"
 )
 
-func SaveVideoHandler(conn net.Conn) {
+func SaveVideoHandler(conn net.Conn) error {
 	frames := make(chan []byte, 30)
 	images := make(chan gocv.Mat)
 
@@ -15,7 +15,7 @@ func SaveVideoHandler(conn net.Conn) {
 	if err != nil {
 		log.Println("error initializing stream context", err)
 		conn.Close()
-		return
+		return err
 	}
 
 	go engine.ImageDecoder(ctx, frames, images)
@@ -24,26 +24,28 @@ func SaveVideoHandler(conn net.Conn) {
 
 	close(frames)
 	close(images)
+	return nil
 }
 
 // ServeSingle creates a server socket, accepts one connection, and then closes the server socket before initializing
 // the engine.
-func ServeSingle(network string, address string) {
+func ServeSingle(network string, address string) error {
 	ln, err := net.Listen(network, address)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	log.Println("accept connection on address", address)
 
 	conn, err := ln.Accept()
 	if err != nil {
-		log.Fatal(err)
+		ln.Close()
+		return err
 	}
 	ln.Close()
 	log.Println("calling connection handler")
 
-	SaveVideoHandler(conn)
+	return SaveVideoHandler(conn)
 }
 
 func Serve(network string, address string) {
