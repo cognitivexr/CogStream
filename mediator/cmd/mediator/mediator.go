@@ -8,7 +8,15 @@ import (
 )
 
 func main() {
-	wsm := app.NewWebsocketMediator(mediator.NewSimpleHandshakeStore(), &mediator.DummyPlatform{})
+	pluginDir := "../../engines/build" // FIXME: add configurable path
+
+	platform, err := mediator.NewPluginPlatform(pluginDir)
+	if err != nil {
+		log.Fatalf("could not load plugins from %s: %s\n", pluginDir, err)
+		return
+	}
+
+	wsm := app.NewWebsocketMediator(mediator.NewSimpleHandshakeStore(), platform)
 	wsm.AddOperationRequestHandler(mediator.DefaultOperationHandler)
 	wsm.AddFormatEstablishmentHandler(mediator.DefaultFormatHandler)
 	http.Handle("/", wsm)
