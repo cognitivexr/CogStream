@@ -1,11 +1,47 @@
 import json
 import logging
 import socket
+import time
+
+import cv2
+import numpy as np
 from websocket import create_connection
 
 import cogstream.protocol as protocol
 
 logger = logging.getLogger(__name__)
+
+
+def stream_camera(cam, client, show=True):
+    goal_fps = 25
+
+    # target frame inter-arrival time
+    ia = 1 / goal_fps
+
+    while True:
+        start = time.time()
+
+        check, frame = cam.read()
+        if not check:
+            logger.info('no more frames to read')
+            break
+
+        if show:
+            cv2.imshow("capture", frame)
+
+        jpg: np.ndarray = cv2.imencode('.jpg', frame)[1]
+
+        client.request(jpg)
+
+        delay = ia - (time.time() - start)
+        if delay >= 0:
+            time.sleep(delay)
+
+        key = cv2.waitKey(1)
+        if key == ord('q'):
+            break
+
+        logger.info('fps: %.2f' % (1 / (time.time() - start)))
 
 
 class MediatorClient:
