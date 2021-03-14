@@ -31,7 +31,9 @@ func (wm *WebsocketMediator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() {
 		err := c.Close()
-		log.Printf("while closing websocket connection: %v", err)
+		if err != nil {
+			log.Printf("while closing websocket connection: %v", err)
+		}
 	}()
 
 	hs := wm.StartHandshake()
