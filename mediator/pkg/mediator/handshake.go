@@ -7,6 +7,7 @@ import (
 )
 
 // TODO: which fields to hide?
+// TODO: turn into real "Context"? isn't really used in anything concurrently so far
 type HandshakeContext struct {
 	Created          time.Time
 	Timeout          time.Duration

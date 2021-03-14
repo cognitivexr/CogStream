@@ -1,0 +1,25 @@
+[
+  {
+    "type": 2,
+    "content": {
+      "code": "record",
+      "attributes": {
+        "foo": [
+          "bar",
+          "baz"
+        ]
+      }
+    }
+  },
+  {
+    "type": 4,
+    "content": {
+      "attributes": {
+        "la": [
+          "le",
+          "lu"
+        ]
+      }
+    }
+  }
+]

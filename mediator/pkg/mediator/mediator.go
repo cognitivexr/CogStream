@@ -15,18 +15,14 @@ type Mediator struct {
 	handlersLocked              bool
 }
 
-func NewMediator() *Mediator {
+func NewMediator(store HandshakeStore, platform Platform) *Mediator {
 	m := &Mediator{
-		handshakes:                  NewSimpleHandshakeStore(),
+		handshakes:                  store,
 		operationRequestHandlers:    make([]HandshakeStepHandler, 0),
 		formatEstablishmentHandlers: make([]HandshakeStepHandler, 0),
 		handlersLocked:              false,
-		platform:                    &DummyPlatform{},
+		platform:                    platform,
 	}
-
-	m.AddOperationRequestHandler(DefaultOperationHandler)
-	m.AddFormatEstablishmentHandler(DefaultFormatHandler)
-
 	return m
 }
 
@@ -37,11 +33,9 @@ func (m *Mediator) StartHandshake() *HandshakeContext {
 	return m.handshakes.StartHandshake()
 }
 
-func (m *Mediator) RequestOperation(sessionId string, spec *messages.OperationSpec) error {
-	hs, ok := m.handshakes.Get(sessionId)
-	if !ok {
-		return fmt.Errorf("no session with id: %v", sessionId)
-	}
+// RequestOperation takes a HandshakeContext and a messages.OperationSpec and adds the messages.OperationSpec
+// and a messages.EngineFormatSpec to the HandshakeContext
+func (m *Mediator) RequestOperation(hs *HandshakeContext, spec *messages.OperationSpec) error {
 	if !hs.Ok {
 		return fmt.Errorf("state is not ok: %v", hs)
 	}
@@ -67,11 +61,9 @@ func (m *Mediator) RequestOperation(sessionId string, spec *messages.OperationSp
 	return nil
 }
 
-func (m *Mediator) EstablishFormat(sessionId string, spec *messages.ClientFormatSpec) error {
-	hs, ok := m.handshakes.Get(sessionId)
-	if !ok {
-		return fmt.Errorf("no session with id: %v", sessionId)
-	}
+// EstablishFormat takes a HandshakeContext and a messages.ClientFormatSpec and adds the messages.ClientFormatSpec
+// and a messages.StreamSpec to the HandshakeContext
+func (m *Mediator) EstablishFormat(hs *HandshakeContext, spec *messages.ClientFormatSpec) error {
 	if !hs.Ok {
 		return fmt.Errorf("state is not ok: %v", hs)
 	}
