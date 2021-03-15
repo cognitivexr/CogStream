@@ -12,7 +12,7 @@ import (
 func main() {
 	hostPtr := flag.String("host", "0.0.0.0", "host to bind to")
 	portPtr := flag.Int("port", 8191, "the server port")
-	pluginDirPtr := flag.String("engine-dir", "../engines/build",
+	pluginDirPtr := flag.String("engine-dir", "engines/",
 		"the directory containing engine plugins")
 
 	flag.Parse()
