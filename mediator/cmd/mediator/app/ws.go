@@ -57,7 +57,7 @@ func (wm *WebsocketMediator) startCommunication(hs *mediator.HandshakeContext, c
 		log.Printf("cannot request operation: %v", err)
 		return
 	}
-	reply, err := mediator.MarshalEngineFormatSpec(hs.EngineFormatSpec)
+	reply, err := mediator.MarshalAvailableEngines(hs.AvailableEngines)
 	if err != nil {
 		log.Printf("cannot marshal engine format spec: %v", err)
 		return
@@ -105,6 +105,7 @@ func (wm *WebsocketMediator) nextMessage(c *websocket.Conn) (int, messages.Messa
 	if err != nil {
 		return 0, messages.Message{}, fmt.Errorf("cannot decode received message: %v", err)
 	}
+	log.Printf("received message: %s", decodedMsg)
 	return mt, decodedMsg, nil
 }
 

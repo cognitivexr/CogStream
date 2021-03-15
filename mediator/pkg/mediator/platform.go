@@ -5,12 +5,17 @@ import (
 	"cognitivexr.at/cogstream/api/messages"
 	"cognitivexr.at/cogstream/pkg/log"
 	"cognitivexr.at/cogstream/pkg/runtime"
+	"errors"
 	"fmt"
-	"time"
+	"strconv"
 )
 
+var EngineNotFound = errors.New("engine not found")
+var EngineNotStarted = errors.New("engine not started")
+
+// TODO: Alert when an error happens here
 type Platform interface {
-	GetEngineFormatSpec(*HandshakeContext) (*messages.EngineFormatSpec, error)
+	GetAvailableEngines(*HandshakeContext) (*messages.AvailableEngines, error)
 	GetStreamSpec(*HandshakeContext) (*messages.StreamSpec, error)
 }
 
@@ -33,44 +38,59 @@ func NewPluginPlatform(pluginDir string) (Platform, error) {
 	}, nil
 }
 
-func (d *DummyPlatform) GetEngineFormatSpec(_ *HandshakeContext) (*messages.EngineFormatSpec, error) {
-	attributes := make(messages.Attributes)
-	attributes.Set("foo", "bar")
-	return &messages.EngineFormatSpec{Attributes: attributes}, nil
+func (d *DummyPlatform) GetAvailableEngines(hs *HandshakeContext) (*messages.AvailableEngines, error) {
+	foundEngines := d.finder.FindEngines(engines.Specification{
+		Operation:  hs.OperationSpec.Code,
+		Attributes: hs.OperationSpec.Attributes,
+	})
+
+	availableEngines := &messages.AvailableEngines{Engines: make([]*messages.EngineSpec, 0)}
+
+	for _, engine := range foundEngines {
+		spec := &messages.EngineSpec{Attributes: messages.NewAttributes()}
+		mapAvailableEngines(engine, spec)
+		availableEngines.Engines = append(availableEngines.Engines, spec)
+	}
+
+	return availableEngines, nil
+}
+
+func mapAvailableEngines(engine *engines.Engine, engineSpec *messages.EngineSpec) {
+	engineSpec.Name = engine.Name
+	engineSpec.Attributes.Set("format.width", strconv.Itoa(engine.Specification.InputFormat.Width))
+	engineSpec.Attributes.Set("format.height", strconv.Itoa(engine.Specification.InputFormat.Height))
+	engineSpec.Attributes.Set("format.colorMode", strconv.Itoa(int(engine.Specification.InputFormat.ColorMode)))
+	for k, v := range engine.Specification.Attributes {
+		engineSpec.Attributes[k] = v
+	}
 }
 
 func (d *DummyPlatform) GetStreamSpec(hs *HandshakeContext) (*messages.StreamSpec, error) {
-	attributes := make(messages.Attributes)
-	attributes.Set("sessionId", hs.SessionId)
-	attributes.Set("config.width", "640")
-	attributes.Set("config.height", "360")
-	attributes.Set("config.colormode", "1")
-
-	var address messages.EngineAddress = "127.0.0.1:53210"
-
-	availableEngines := d.finder.FindEngines(engines.Specification{Operation: hs.OperationSpec.Code})
-
-	if len(availableEngines) <= 0 {
-		return nil, fmt.Errorf("no engine for the given operation")
+	engine, ok := d.finder.FindEngineByName(hs.ClientFormatSpec.Engine)
+	if !ok {
+		// TODO: alert
+		return nil, errors.New("cannot find engine")
 	}
-	if len(availableEngines) > 1 {
-		// TODO: decide how to resolve ambiguities
-		log.Warn("too many engines match the specification")
-	}
-
-	engine := availableEngines[0]
 	log.Info("found engine %v", engine)
 
-	go func() {
-		_, err := d.runtime.StartEngine(engine)
-		if err != nil {
-			log.Warn("engine %s stopped with error: %s", engine.Name, err)
-		} else {
-			log.Info("engine %s stopped", engine.Name)
-		}
-	}()
+	//go func() {
+	//	_, err := d.runtime.StartEngine(engine)
+	//	if err != nil {
+	//		log.Warn("engine %s stopped with error: %s", engine.Name, err)
+	//	} else {
+	//		log.Info("engine %s stopped", engine.Name)
+	//	}
+	//}()
+	runningEngine, err := d.runtime.StartEngine(engine)
+	if err != nil {
+		// TODO: alert that runtime f'd up
+		log.Warn("engine %s failed to start: %v", engine.Name, err)
+		return nil, EngineNotStarted
+	}
+	if runningEngine == nil {
+		return nil, fmt.Errorf("")
+	}
 
-	time.Sleep(500 * time.Millisecond) // TODO: how to indicate that the engine is up and running?
-
-	return &messages.StreamSpec{EngineAddress: address, Attributes: attributes}, nil
+	// TODO:
+	return &messages.StreamSpec{EngineAddress: runningEngine.Address, Attributes: messages.NewAttributes()}, nil
 }

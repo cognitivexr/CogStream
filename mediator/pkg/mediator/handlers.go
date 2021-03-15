@@ -5,11 +5,11 @@ import (
 )
 
 func DefaultOperationHandler(hs *HandshakeContext, platform Platform) error {
-	engineFormat, err := platform.GetEngineFormatSpec(hs)
+	engineFormat, err := platform.GetAvailableEngines(hs)
 	if err != nil {
 		return fmt.Errorf("cannot get engine format spec: %v", err)
 	}
-	hs.EngineFormatSpec = engineFormat
+	hs.AvailableEngines = engineFormat
 	return nil
 }
 

@@ -14,7 +14,7 @@ type HandshakeContext struct {
 	Timeout          time.Duration
 	SessionId        string
 	OperationSpec    *messages.OperationSpec
-	EngineFormatSpec *messages.EngineFormatSpec
+	AvailableEngines *messages.AvailableEngines
 	ClientFormatSpec *messages.ClientFormatSpec
 	StreamSpec       *messages.StreamSpec
 	Alert            *messages.Alert

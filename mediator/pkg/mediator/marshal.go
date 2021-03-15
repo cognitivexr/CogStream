@@ -30,7 +30,7 @@ func UnmarshalClientFormatSpec(message messages.Message) (messages.ClientFormatS
 	return spec, nil
 }
 
-func MarshalEngineFormatSpec(spec *messages.EngineFormatSpec) ([]byte, error) {
+func MarshalAvailableEngines(spec *messages.AvailableEngines) ([]byte, error) {
 	content, err := json.Marshal(spec)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal engine format spec: %v", err)
