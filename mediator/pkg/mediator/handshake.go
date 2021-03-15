@@ -2,6 +2,7 @@ package mediator
 
 import (
 	"cognitivexr.at/cogstream/api/messages"
+	"cognitivexr.at/cogstream/pkg/util"
 	"math/rand"
 	"time"
 )
@@ -83,7 +84,7 @@ func (s *simpleHandshakeStore) Get(id string) (*HandshakeContext, bool) {
 
 func (s *simpleHandshakeStore) nextSessionId() string {
 	// TODO: create random id
-	return randomString(15)
+	return util.RandomString(15)
 }
 
 func (s *simpleHandshakeStore) expire() {
@@ -95,15 +96,4 @@ func (s *simpleHandshakeStore) expire() {
 			delete(s.storage, id)
 		}
 	}
-}
-
-const runes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-func randomString(l int) string {
-	bytes := make([]byte, l)
-	n := len(runes)
-	for i := 0; i < l; i++ {
-		bytes[i] = runes[rand.Intn(n)]
-	}
-	return string(bytes)
 }

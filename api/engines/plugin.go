@@ -1,5 +1,7 @@
 package engines
 
+import "context"
+
 type PluginEngineRunner interface {
-	Run(address string, specification *Specification) error
+	Run(ctx context.Context, address string, specification *Specification) error
 }

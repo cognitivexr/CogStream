@@ -13,5 +13,5 @@ type EngineFinder interface {
 type EngineRuntime interface {
 	StartEngine(engine *engines.Engine) (*engines.RunningEngine, error)
 	StopEngine(*engines.RunningEngine) error
-	ListRunning() *engines.RunningEngine
+	ListRunning() []*engines.RunningEngine
 }

@@ -2,7 +2,10 @@ package runtime
 
 import (
 	"cognitivexr.at/cogstream/api/engines"
+	"cognitivexr.at/cogstream/api/messages"
 	"cognitivexr.at/cogstream/pkg/log"
+	"cognitivexr.at/cogstream/pkg/util"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +13,7 @@ import (
 	"plugin"
 	"reflect"
 	"strings"
+	"sync"
 )
 
 type PluginEngine struct {
@@ -50,17 +54,24 @@ func OpenPluginEngine(pluginPath string) (*PluginEngine, error) {
 	return &PluginEngine{pluginPath, pluginObj, *runner, spec}, nil
 }
 
+type runningEngineContext struct {
+	runningEngine *engines.RunningEngine
+	ctx           context.Context
+	cancel        context.CancelFunc
+	started       *sync.WaitGroup
+}
+
 type pluginEngineRuntime struct {
 	pluginDir        string
 	availableEngines map[string]*PluginEngine
-	runningEngines   []*engines.RunningEngine
+	runningEngines   map[string]*runningEngineContext
 }
 
 func NewPluginEngineRuntime(pluginDir string) *pluginEngineRuntime {
 	return &pluginEngineRuntime{
 		pluginDir:        pluginDir,
 		availableEngines: make(map[string]*PluginEngine),
-		runningEngines:   make([]*engines.RunningEngine, 0),
+		runningEngines:   make(map[string]*runningEngineContext),
 	}
 }
 
@@ -99,7 +110,7 @@ func engineMatches(engine *PluginEngine, specification engines.Specification) bo
 }
 
 func (p *pluginEngineRuntime) getPluginEngine(engine *engines.Engine) (*PluginEngine, bool) {
-	pe, ok :=  p.availableEngines[engine.Name]
+	pe, ok := p.availableEngines[engine.Name]
 	return pe, ok
 }
 
@@ -125,23 +136,78 @@ func (p *pluginEngineRuntime) FindEngineByName(name string) (*engines.Engine, bo
 	return nil, false
 }
 
+func newRunningEngineContext() *runningEngineContext {
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	started := new(sync.WaitGroup)
+	started.Add(1)
+	ctx = context.WithValue(ctx, "started", started)
+
+	reCtx := &runningEngineContext{
+		runningEngine: new(engines.RunningEngine),
+		ctx:           ctx,
+		cancel:        cancelFunc,
+		started:       started,
+	}
+
+	return reCtx
+}
+
 func (p *pluginEngineRuntime) StartEngine(engine *engines.Engine) (*engines.RunningEngine, error) {
 	pluginEngine, ok := p.getPluginEngine(engine)
-	if !ok  {
+	if !ok {
 		return nil, fmt.Errorf("could not find plugin engine for %s", engine.Name)
 	}
 
-	// FIXME: how to get the engine address?
-	err := pluginEngine.Runner.Run("0.0.0.0:53210", nil)
-	return nil, err
+	ctx := newRunningEngineContext()
+	runtimeId := util.RandomString(15)
+	ctx.runningEngine.RuntimeId = runtimeId
+
+	// TODO: how do we correctly determine the engine address?
+	addr := "0.0.0.0:53210"
+	ctx.runningEngine.Address = messages.EngineAddress(addr)
+
+	// TODO: mutex
+	p.runningEngines[runtimeId] = ctx
+
+	go func() {
+		// TODO: create and pass a specification
+		err := pluginEngine.Runner.Run(ctx.ctx, addr, nil)
+
+		if err != nil {
+			log.Error("error running engine %s: %s", runtimeId, err)
+			ctx.cancel()
+		} else {
+			log.Info("engine %s stopped", runtimeId)
+		}
+	}()
+
+	log.Info("waiting on engine %s(%s) to start", ctx.runningEngine.Engine.Name, runtimeId)
+	// FIXME: should also return on context cancellation
+	ctx.started.Wait()
+	log.Info("engine %s(%s) started", ctx.runningEngine.Engine.Name, runtimeId)
+
+	return ctx.runningEngine, nil
 }
 
 func (p *pluginEngineRuntime) StopEngine(engine *engines.RunningEngine) error {
-	panic("implement me")
+	// TODO: mutex
+	ctx, ok := p.runningEngines[engine.RuntimeId]
+	if !ok {
+		return fmt.Errorf("no such engine %s", engine.RuntimeId)
+	}
+	ctx.cancel()
+	delete(p.runningEngines, engine.RuntimeId)
+	return nil
 }
 
-func (p *pluginEngineRuntime) ListRunning() *engines.RunningEngine {
-	panic("implement me")
+func (p *pluginEngineRuntime) ListRunning() []*engines.RunningEngine {
+	// TODO: mutex
+
+	running := make([]*engines.RunningEngine, 0)
+	for _, reCtx := range p.runningEngines {
+		running = append(running, reCtx.runningEngine)
+	}
+	return running
 }
 
 func ParseSpec(specFilePath string) (*engines.Engine, error) {
