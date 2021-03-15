@@ -69,7 +69,7 @@ func (d *DummyPlatform) GetStreamSpec(hs *HandshakeContext) (*messages.StreamSpe
 	engine, ok := d.finder.FindEngineByName(hs.ClientFormatSpec.Engine)
 	if !ok {
 		// TODO: alert
-		return nil, nil
+		return nil, errors.New("cannot find engine")
 	}
 	log.Info("found engine %v", engine)
 

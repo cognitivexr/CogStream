@@ -2,7 +2,7 @@ import argparse
 
 import cv2
 
-from cogstream.client import MediatorClient, EngineClient, stream_camera, OperationSpec
+from cogstream.client import MediatorClient, EngineClient, stream_camera, OperationSpec, ClientFormatSpec
 
 
 def main():
@@ -20,24 +20,23 @@ def main():
         return -1
 
     op_spec = OperationSpec(args.operation, {"format.width": ["640"], "format.height": ["360"], "codec": ["xvid"]})
-    engine_spec = mediator.request_operation(op_spec)
-    print(engine_spec)
+    available_engines = mediator.request_operation(op_spec)
 
-    # todo: handle engine specs and use them for establishing format
+    if not available_engines.engines:
+        return -1
 
-    stream_spec = mediator.establish_format({
-        "attributes": {
-            "la": [
-                "le",
-                "lu"
-            ]
-        }
-    })
+    # todo: select for real
+
+    selection = available_engines.engines[0]
+
+    client_format = ClientFormatSpec(selection.name,
+                                     {"format.width": ["640"], "format.height": ["360"], "codec": ["xvid"]})
+    stream_spec = mediator.establish_format(client_format)
     print(stream_spec)
     mediator.close()
 
     # todo: use agreement for connection
-    address = stream_spec["content"]["engineAddress"].split(":")
+    address = stream_spec.engineAddress.split(":")
     tup_addr = (address[0], int(address[1]))
 
     engine_client = EngineClient(tup_addr)

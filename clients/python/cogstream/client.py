@@ -74,7 +74,7 @@ class ClientFormatSpec:
 
 @dataclass
 class StreamSpec:
-    engine_address: str
+    engineAddress: str
     attributes: Attributes
 
 
