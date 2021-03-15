@@ -24,7 +24,6 @@ type InputFormat struct {
 	Width     int       `json:"width"`
 	Height    int       `json:"height"`
 	ColorMode ColorMode `json:"colorMode"`
-	Framerate float32   `json:"framerate"`
 }
 
 // AnyInputFormat indicates that the any input format is supported or accepted.

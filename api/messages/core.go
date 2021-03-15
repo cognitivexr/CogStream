@@ -41,6 +41,10 @@ func (a Attributes) Get(key string) string {
 	return v[0]
 }
 
+func NewAttributes() Attributes {
+	return make(map[string][]string)
+}
+
 type Message struct {
 	Type    MessageType     `json:"type"`
 	Content json.RawMessage `json:"content"`
@@ -55,11 +59,17 @@ type OperationSpec struct {
 	Attributes Attributes    `json:"attributes"`
 }
 
-type EngineFormatSpec struct {
+type EngineSpec struct {
+	Name       string     `json:"name"`
 	Attributes Attributes `json:"attributes"`
 }
 
+type AvailableEngines struct {
+	Engines []*EngineSpec `json:"engines"`
+}
+
 type ClientFormatSpec struct {
+	Engine     string     `json:"engine"`
 	Attributes Attributes `json:"attributes"`
 }
 

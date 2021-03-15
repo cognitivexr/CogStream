@@ -2,7 +2,7 @@ import argparse
 
 import cv2
 
-from cogstream.client import MediatorClient, EngineClient, stream_camera
+from cogstream.client import MediatorClient, EngineClient, stream_camera, OperationSpec
 
 
 def main():
@@ -19,15 +19,8 @@ def main():
     if args.operation != 'record':
         return -1
 
-    engine_spec = mediator.request_operation({
-        "code": "record",
-        "attributes": {
-            "foo": [
-                "bar",
-                "baz"
-            ]
-        }
-    })
+    op_spec = OperationSpec(args.operation, {"format.width": ["640"], "format.height": ["360"], "codec": ["xvid"]})
+    engine_spec = mediator.request_operation(op_spec)
     print(engine_spec)
 
     # todo: handle engine specs and use them for establishing format

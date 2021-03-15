@@ -29,7 +29,7 @@ func TestMediator_ProcessMessage(t *testing.T) {
 	if hs.OperationSpec == nil {
 		t.Error("operation spec was not set in handshake context")
 	}
-	if hs.EngineFormatSpec == nil {
+	if hs.AvailableEngines == nil {
 		t.Error("engine format spec was not set in handshake context")
 	}
 

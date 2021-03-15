@@ -34,12 +34,12 @@ func (m *Mediator) StartHandshake() *HandshakeContext {
 }
 
 // RequestOperation takes a HandshakeContext and a messages.OperationSpec and adds the messages.OperationSpec
-// and a messages.EngineFormatSpec to the HandshakeContext
+// and a messages.AvailableEngines to the HandshakeContext
 func (m *Mediator) RequestOperation(hs *HandshakeContext, spec *messages.OperationSpec) error {
 	if !hs.Ok {
 		return fmt.Errorf("state is not ok: %v", hs)
 	}
-	if hs.OperationSpec != nil || hs.EngineFormatSpec != nil || hs.ClientFormatSpec != nil || hs.StreamSpec != nil {
+	if hs.OperationSpec != nil || hs.AvailableEngines != nil || hs.ClientFormatSpec != nil || hs.StreamSpec != nil {
 		hs.Ok = false
 		return fmt.Errorf("state is not empty: %v", hs)
 	}
@@ -53,7 +53,7 @@ func (m *Mediator) RequestOperation(hs *HandshakeContext, spec *messages.Operati
 			return fmt.Errorf("cannot handle operation spec: %v", err)
 		}
 	}
-	if hs.EngineFormatSpec == nil {
+	if hs.AvailableEngines == nil {
 		hs.Ok = false
 		return fmt.Errorf("no engine format set")
 	}
@@ -67,7 +67,7 @@ func (m *Mediator) EstablishFormat(hs *HandshakeContext, spec *messages.ClientFo
 	if !hs.Ok {
 		return fmt.Errorf("state is not ok: %v", hs)
 	}
-	if hs.OperationSpec == nil || hs.EngineFormatSpec == nil || hs.ClientFormatSpec != nil || hs.StreamSpec != nil {
+	if hs.OperationSpec == nil || hs.AvailableEngines == nil || hs.ClientFormatSpec != nil || hs.StreamSpec != nil {
 		hs.Ok = false
 		return fmt.Errorf("state is not ready for format establishment: %v", hs)
 	}
