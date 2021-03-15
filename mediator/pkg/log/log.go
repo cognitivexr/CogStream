@@ -45,7 +45,7 @@ func (l *Logger) SetLevel(level Level) {
 
 func (l *Logger) Log(level Level, format string, v ...interface{}) {
 	if l.IsEnabledFor(level) {
-		log.Printf("["+level.Prefix()+"] "+format+"\n", v...)
+		log.Printf("["+level.Prefix()+"] "+format, v...)
 	}
 }
 
