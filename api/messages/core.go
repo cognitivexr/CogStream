@@ -26,19 +26,29 @@ type AlertCode int32
 
 type Attributes map[string][]string
 
-func (a Attributes) Set(key string, value string) {
+func (a Attributes) Set(key string, value string) Attributes {
 	a[key] = []string{value}
+	return a
 }
 
 func (a Attributes) Get(key string) string {
 	if a == nil {
 		return ""
 	}
-	v := a[key]
-	if len(v) == 0 {
+	v, ok := a[key]
+	if !ok {
+		return ""
+	}
+	if v == nil || len(v) == 0 {
 		return ""
 	}
 	return v[0]
+}
+
+func (a Attributes) CopyFrom(b Attributes, keys ...string) {
+	for _, key := range keys {
+		a[key] = b[key]
+	}
 }
 
 func NewAttributes() Attributes {
