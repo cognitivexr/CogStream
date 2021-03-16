@@ -12,10 +12,10 @@ def main():
     parser.add_argument('--host', type=str, help='the mediator address', default='127.0.0.1')
     parser.add_argument('--port', type=int, help='the mediator port (default 8191)', default=8191)
 
-    parser.add_argument('--capture-height', type=int, help='camera capture height', default=1280)
-    parser.add_argument('--capture-width', type=int, help='camera capture width', default=720)
-    parser.add_argument('--record-height', type=int, help='video height', default=640)
-    parser.add_argument('--record-width', type=int, help='video width', default=360)
+    parser.add_argument('--capture-width', type=int, help='camera capture height', default=800)
+    parser.add_argument('--capture-height', type=int, help='camera capture width', default=600)
+    parser.add_argument('--record-width', type=int, help='video height', default=640)
+    parser.add_argument('--record-height', type=int, help='video width', default=480)
 
     args = parser.parse_args()
 
