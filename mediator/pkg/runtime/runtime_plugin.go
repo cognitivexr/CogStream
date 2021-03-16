@@ -171,7 +171,7 @@ func (p *pluginEngineRuntime) StartEngine(engine *engines.Engine) (*engines.Runn
 
 	go func() {
 		// TODO: create and pass a specification
-		err := pluginEngine.Runner.Run(ctx.ctx, addr, nil)
+		err := pluginEngine.Runner.Run(ctx.ctx, engine, addr)
 
 		if err != nil {
 			log.Error("error running engine %s: %s", runtimeId, err)

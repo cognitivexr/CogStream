@@ -1,7 +1,7 @@
 package record
 
 import (
-	"cognitivexr.at/cogstream/engines/pkg/engine"
+	"context"
 	"errors"
 	"gocv.io/x/gocv"
 	"log"
@@ -9,7 +9,7 @@ import (
 )
 
 // getVideoWriter creates a new gocv VideoWriter for the given StreamContext.
-func getVideoWriter(ctx engine.StreamContext, src <-chan gocv.Mat) (*gocv.VideoWriter, error) {
+func getVideoWriter(ctx context.Context, src <-chan gocv.Mat) (*gocv.VideoWriter, error) {
 	// FIXME: determine parameters from engine context
 
 	var fileName = "/tmp/go-record-" + time.Now().Format("20060102-150405") + ".avi"
@@ -41,7 +41,7 @@ func getVideoWriter(ctx engine.StreamContext, src <-chan gocv.Mat) (*gocv.VideoW
 	return gocv.VideoWriterFile(fileName, "MJPG", fps, cols, rows, true)
 }
 
-func SaveVideoSink(ctx engine.StreamContext, src <-chan gocv.Mat) {
+func SaveVideoSink(ctx context.Context, src <-chan gocv.Mat) {
 	writer, err := getVideoWriter(ctx, src)
 	if err != nil {
 		log.Println("error creating video writer", err)

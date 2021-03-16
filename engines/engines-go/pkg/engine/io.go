@@ -10,7 +10,6 @@ import (
 const DefaultBufferSize = 1.5e+6 // 1.5MB
 
 type FrameScanner struct {
-	ctx StreamContext
 	r   io.Reader
 	lr  *io.LimitedReader
 
@@ -21,12 +20,11 @@ type FrameScanner struct {
 	err  error
 }
 
-func NewFrameScanner(ctx StreamContext, r io.Reader) *FrameScanner {
+func NewFrameScanner(r io.Reader) *FrameScanner {
 	buf := bytes.NewBuffer(make([]byte, DefaultBufferSize))
 	buf.Reset()
 
 	return &FrameScanner{
-		ctx:  ctx,
 		r:    r,
 		lr:   &io.LimitedReader{R: r, N: 0},
 		buf:  buf,

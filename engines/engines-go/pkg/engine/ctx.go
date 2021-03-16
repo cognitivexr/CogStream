@@ -1,75 +1,68 @@
 package engine
 
 import (
+	"cognitivexr.at/cogstream/api/format"
+	"cognitivexr.at/cogstream/api/messages"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 )
 
-type ColorMode int
+type contextKey struct {
+	name string
+}
 
-const (
-	UNKNOWN = iota
-	RGB
-	RGBA
-	GRAY
-	BGR
-	BGRA
-	HLS
-	Lab
-	Luv
-	Bayer
+var (
+	StreamMetadataKey = &contextKey{name: "stream-metadata"}
 )
 
-// FIXME: this should be the same struct as the mediator provides
-type Agreement struct {
-	SessionId string `json:"sessionId"`
-	Operation string `json:"operation"`
-	Config    Config `json:"config"`
+type StreamMetadata struct {
+	spec *messages.StreamSpec
+
+	ClientFormat format.Format
+	EngineFormat format.Format
 }
 
-type Config struct {
-	Width     int       `json:"width"`
-	Height    int       `json:"height"`
-	ColorMode ColorMode `json:"colorMode"`
+func NewStreamMetadata() *StreamMetadata {
+	return new(StreamMetadata)
 }
 
-type StreamContext interface {
-	context.Context
-	Config() *Config
+func GetStreamMetadata(ctx context.Context) (metadata *StreamMetadata, ok bool) {
+	metadata, ok = ctx.Value(StreamMetadataKey).(*StreamMetadata)
+	return
 }
 
-type defaultStreamContext struct {
-	context.Context
-	config *Config
+func NewStreamContext(parent context.Context, metadata *StreamMetadata) context.Context {
+	return context.WithValue(parent, StreamMetadataKey, metadata)
 }
 
-func (d *defaultStreamContext) Config() *Config {
-	return d.config
-}
-
-func NewStreamContext() *defaultStreamContext {
-	return &defaultStreamContext{context.TODO(), new(Config)}
-}
-
-func InitStreamContext(r io.Reader) (StreamContext, error) {
+func InitStream(ctx context.Context, r io.Reader) error {
 	// read packet header
 	n, err := readPacketHeader(r)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// de-serialize json
+	// de-serialize stream spec json
 	lr := io.LimitReader(r, n)
-	a := new(Agreement)
-	err = json.NewDecoder(lr).Decode(a)
+	spec := new(messages.StreamSpec)
+	err = json.NewDecoder(lr).Decode(spec)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("unable to decode stream spec: %v", err)
 	}
-	log.Printf("deserialized agreement %v\n", a)
 
-	ctx := NewStreamContext()
-	ctx.config = &a.Config
-	return ctx, nil
+	clientFormat, err := messages.FormatFromAttributes(spec.Attributes)
+	if err != nil {
+		return fmt.Errorf("unable to determine client input format: %v", err)
+	}
+	log.Printf("deserialized StreamSpec: %v", spec)
+
+	metadata, ok := GetStreamMetadata(ctx)
+	if ok && metadata != nil {
+		metadata.ClientFormat = clientFormat
+	}
+
+	return nil
 }

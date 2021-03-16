@@ -1,12 +1,13 @@
 package engine
 
 import (
+	"context"
 	"gocv.io/x/gocv"
 	"log"
 )
 
 // Sink to display the frames in a gocv Window
-func WindowDisplaySink(ctx StreamContext, src <-chan gocv.Mat) {
+func WindowDisplaySink(ctx context.Context, src <-chan gocv.Mat) {
 	window := gocv.NewWindow("window")
 	defer window.Close()
 

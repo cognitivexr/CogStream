@@ -1,11 +1,12 @@
 package engine
 
 import (
+	"context"
 	"gocv.io/x/gocv"
 	"log"
 )
 
-func ImageDecoder(ctx StreamContext, source <-chan []byte, dest chan<- gocv.Mat) {
+func ImageDecoder(ctx context.Context, source <-chan []byte, dest chan<- gocv.Mat) {
 	flags := gocv.IMReadColor // FIXME determine flags from StreamContext
 
 	for {

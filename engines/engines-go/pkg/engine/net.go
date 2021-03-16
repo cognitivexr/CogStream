@@ -1,11 +1,12 @@
 package engine
 
 import (
+	"context"
 	"log"
 	"net"
 )
 
-func ConnectionHandler(ctx StreamContext, conn net.Conn, frames chan<- []byte) {
+func ConnectionHandler(ctx context.Context, conn net.Conn, frames chan<- []byte) {
 	remoteAddr := conn.RemoteAddr()
 	log.Printf("[%s] accepted connection\n", remoteAddr)
 	defer func() {
@@ -13,7 +14,7 @@ func ConnectionHandler(ctx StreamContext, conn net.Conn, frames chan<- []byte) {
 		conn.Close()
 	}()
 
-	scanner := NewFrameScanner(ctx, conn)
+	scanner := NewFrameScanner(conn)
 
 	for scanner.Next() {
 		if scanner.Err() != nil {
