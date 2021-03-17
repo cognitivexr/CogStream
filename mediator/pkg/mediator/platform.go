@@ -73,7 +73,7 @@ func (d *DummyPlatform) GetStreamSpec(hs *HandshakeContext) (*messages.StreamSpe
 	}
 	log.Info("found engine %v", engine)
 
-	runningEngine, err := d.runtime.StartEngine(engine)
+	runningEngine, err := d.runtime.StartEngine(engine, hs.OperationSpec.Attributes)
 	if err != nil {
 		// TODO: alert that runtime f'd up
 		log.Warn("engine %s failed to start: %v", engine.Name, err)

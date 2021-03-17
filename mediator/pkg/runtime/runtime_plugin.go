@@ -152,7 +152,7 @@ func newRunningEngineContext() *runningEngineContext {
 	return reCtx
 }
 
-func (p *pluginEngineRuntime) StartEngine(engine *engines.Engine) (*engines.RunningEngine, error) {
+func (p *pluginEngineRuntime) StartEngine(engine *engines.Engine, attributes messages.Attributes) (*engines.RunningEngine, error) {
 	pluginEngine, ok := p.getPluginEngine(engine)
 	if !ok {
 		return nil, fmt.Errorf("could not find plugin engine for %s", engine.Name)
@@ -161,6 +161,7 @@ func (p *pluginEngineRuntime) StartEngine(engine *engines.Engine) (*engines.Runn
 	ctx := newRunningEngineContext()
 	runtimeId := util.RandomString(15)
 	ctx.runningEngine.RuntimeId = runtimeId
+	ctx.ctx = context.WithValue(ctx.ctx, "attributes", attributes)
 
 	// TODO: how do we correctly determine the engine address?
 	addr := "0.0.0.0:53210"
