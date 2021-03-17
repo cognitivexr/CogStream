@@ -34,6 +34,11 @@ func GetStreamMetadata(ctx context.Context) (metadata *StreamMetadata, ok bool) 
 	return
 }
 
+func GetAttributes(ctx context.Context) (attr messages.Attributes, ok bool) {
+	attr, ok = ctx.Value("attributes").(messages.Attributes)
+	return
+}
+
 func NewStreamContext(parent context.Context, metadata *StreamMetadata) context.Context {
 	return context.WithValue(parent, StreamMetadataKey, metadata)
 }
@@ -52,16 +57,19 @@ func InitStream(ctx context.Context, r io.Reader) error {
 	if err != nil {
 		return fmt.Errorf("unable to decode stream spec: %v", err)
 	}
+	log.Printf("deserialized StreamSpec: %v", spec)
 
 	clientFormat, err := messages.FormatFromAttributes(spec.Attributes)
 	if err != nil {
 		return fmt.Errorf("unable to determine client input format: %v", err)
 	}
-	log.Printf("deserialized StreamSpec: %v", spec)
 
 	metadata, ok := GetStreamMetadata(ctx)
 	if ok && metadata != nil {
 		metadata.ClientFormat = clientFormat
+		log.Printf("setting ClientFormat in metadata %v", clientFormat)
+	} else {
+		log.Printf("could not set ClientFormat in metadata %v", clientFormat)
 	}
 
 	return nil

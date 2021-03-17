@@ -2,6 +2,7 @@ package record
 
 import (
 	"cognitivexr.at/cogstream/api/engines"
+	"cognitivexr.at/cogstream/api/messages"
 	"cognitivexr.at/cogstream/engines/pkg/engine"
 	"context"
 	"gocv.io/x/gocv"
@@ -16,6 +17,18 @@ func SaveVideoHandler(ctx context.Context, e *engines.Engine, conn net.Conn) err
 
 	metadata := engine.NewStreamMetadata()
 	ctx = engine.NewStreamContext(ctx, metadata)
+
+	metadata.EngineFormat = e.Specification.InputFormat
+
+	if attrs, ok := engine.GetAttributes(ctx); ok {
+		// this is a mess. target format is encoded in OperationSpec sent by the client
+		if format, err := messages.FormatFromAttributes(attrs); err == nil {
+			log.Printf("deserialized engine format from context attributes: %v", format)
+			metadata.EngineFormat = format
+		} else {
+			log.Printf("error while reading attributes: %v", err)
+		}
+	}
 
 	err := engine.InitStream(ctx, conn)
 	if err != nil {

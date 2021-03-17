@@ -1,12 +1,42 @@
 package engine
 
 import (
+	"cognitivexr.at/cogstream/api/format"
+	"cognitivexr.at/cogstream/engines/pkg/transform"
 	"context"
 	"gocv.io/x/gocv"
 	"log"
 )
 
+// TODO: separate transport (JPEG channel, bitmap channel, ...) and stream (source format, engine format)
+
 func ImageDecoder(ctx context.Context, source <-chan []byte, dest chan<- gocv.Mat) {
+	metadata, ok := GetStreamMetadata(ctx)
+	if !ok {
+		log.Println("could not get stream metadata from context")
+		metadata = NewStreamMetadata()
+	}
+
+	// create transformer
+	var tf transform.Function
+
+	if metadata.EngineFormat == format.AnyFormat {
+		log.Println("engine format = any format")
+		tf = transform.NoTransform
+	} else if metadata.ClientFormat == format.AnyFormat {
+		log.Println("clientFormat format = any format")
+		// FIXME: determine format from first frame
+		tf = transform.NoTransform
+	}  else {
+		tf1, err := transform.BuildTransformer(metadata.ClientFormat, metadata.EngineFormat)
+		tf = tf1
+		if err != nil {
+			log.Printf("error building transformer: %v\n", err)
+			tf = transform.NoTransform
+		}
+	}
+
+
 	flags := gocv.IMReadColor // FIXME determine flags from StreamContext
 
 	for {
@@ -28,9 +58,7 @@ func ImageDecoder(ctx context.Context, source <-chan []byte, dest chan<- gocv.Ma
 		}
 
 		// FIXME determine transformations from StreamContext
-		gocv.Flip(img, &img, 0)
-		gocv.CvtColor(img, &img, gocv.ColorBGRToRGB)
-		//log.Printf("transformation took %v\n", time.Now().Sub(then))
+		tf(img, &img)
 
 		dest <- img
 	}
