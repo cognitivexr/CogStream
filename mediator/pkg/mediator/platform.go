@@ -73,24 +73,25 @@ func (d *DummyPlatform) GetStreamSpec(hs *HandshakeContext) (*messages.StreamSpe
 	}
 	log.Info("found engine %v", engine)
 
-	//go func() {
-	//	_, err := d.runtime.StartEngine(engine)
-	//	if err != nil {
-	//		log.Warn("engine %s stopped with error: %s", engine.Name, err)
-	//	} else {
-	//		log.Info("engine %s stopped", engine.Name)
-	//	}
-	//}()
-	runningEngine, err := d.runtime.StartEngine(engine)
+	runningEngine, err := d.runtime.StartEngine(engine, hs.OperationSpec.Attributes)
 	if err != nil {
 		// TODO: alert that runtime f'd up
 		log.Warn("engine %s failed to start: %v", engine.Name, err)
 		return nil, EngineNotStarted
 	}
 	if runningEngine == nil {
-		return nil, fmt.Errorf("")
+		return nil, fmt.Errorf("engine runtime returned nil after StartEngine")
+	}
+
+	// TODO stream format should be negotiated, here we just assume that the stream format = client format
+	attrs := messages.NewAttributes()
+	format, err := messages.FormatFromAttributes(hs.ClientFormatSpec.Attributes)
+	if err == nil {
+		messages.FormatToAttributes(format, attrs)
+	} else {
+		log.Error("failed to read client format from attributes", err)
 	}
 
 	// TODO:
-	return &messages.StreamSpec{EngineAddress: runningEngine.Address, Attributes: messages.NewAttributes()}, nil
+	return &messages.StreamSpec{EngineAddress: runningEngine.Address, Attributes: attrs}, nil
 }

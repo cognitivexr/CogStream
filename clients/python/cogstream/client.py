@@ -3,7 +3,7 @@ import logging
 import socket
 import time
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from cogstream.typing import deep_to_dict, deep_from_dict
 
 import cv2
@@ -77,6 +77,48 @@ class StreamSpec:
     engineAddress: str
     attributes: Attributes
 
+    def get_socket_address(self) -> Tuple[str, int]:
+        address = self.engineAddress.split(":")
+        return address[0], int(address[1])
+
+
+def to_attributes(dictionary: Dict) -> Attributes:
+    return AttributeBuilder().update(dictionary).build()
+
+
+class AttributeBuilder:
+    """
+    Creates attribute objects for CogStream handshake messages. Can be called in various ways.
+    For example:
+
+        b = AttributeBuilder().set('format.height', 360).update({'codecs': ('xvid', 'mpeg')})
+        b['format.width'] = '640'
+        print(b.build())
+
+    Will output: {'format.height': ['360'], 'codecs': ['xvid', 'mpeg'], 'format.width': ['640']}
+    """
+
+    def __init__(self):
+        self._attributes = {}
+
+    def __setitem__(self, key, value):
+        if isinstance(value, (list, tuple)):
+            self._attributes[key] = [str(v) for v in value]
+            return
+        self._attributes[key] = [str(value)]
+
+    def set(self, key, value):
+        self[key] = value
+        return self
+
+    def update(self, doc: Dict):
+        for k, v in doc.items():
+            self[k] = v
+        return self
+
+    def build(self) -> Attributes:
+        return self._attributes
+
 
 class MediatorClient:
     def __init__(self, host, port):
@@ -105,25 +147,33 @@ class MediatorClient:
 
 
 class EngineClient:
-    def __init__(self, address) -> None:
+    def __init__(self, stream_spec: StreamSpec) -> None:
         super().__init__()
-        self.address = address
+        self.stream_spec = stream_spec
+        self.address = stream_spec.get_socket_address()
         self.sock = None
-        self.handshake = False
+        self.acknowledged = False
 
-    def open(self, stream_spec):
+    def open(self):
         if self.sock is not None:
             raise ValueError('already connected')
 
         address = self.address
-        logger.info('connecting to server at %s', address)
+        logger.info('connecting to engine at %s', address)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(address)
 
-        protocol.send_packet(sock, json.dumps(stream_spec).encode('UTF-8'))
+        doc = json.dumps(deep_to_dict(self.stream_spec))
+        logger.info("initializing stream with stream spec: %s", doc)
+        protocol.send_packet(sock, doc.encode('UTF-8'))
 
         self.sock = sock
-        self.handshake = True
+        self.acknowledged = True
+
+    def request(self, frame):
+        payload = protocol.serialize_frame(frame)
+        protocol.send_packet(self.sock, payload)
+        return 'ok'
 
     def close(self):
         if self.sock is None:
@@ -131,8 +181,3 @@ class EngineClient:
 
         logger.info('closing socket')
         self.sock.close()
-
-    def request(self, frame):
-        payload = protocol.serialize_frame(frame)
-        protocol.send_packet(self.sock, payload)
-        return 'ok'

@@ -9,8 +9,8 @@ import (
 type runner struct {
 }
 
-func (r *runner) Run(ctx context.Context, address string, specification *engines.Specification) error {
-	err := record.ServeSingle(ctx,"tcp", address)
+func (r *runner) Run(ctx context.Context, engine *engines.Engine, address string) error {
+	err := record.ServeSingle(ctx, engine, "tcp", address)
 	return err
 }
 

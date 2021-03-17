@@ -2,7 +2,7 @@ import argparse
 
 import cv2
 
-from cogstream.client import MediatorClient, EngineClient, stream_camera, OperationSpec, ClientFormatSpec
+from cogstream.client import MediatorClient, EngineClient, stream_camera, OperationSpec, ClientFormatSpec, to_attributes
 
 
 def main():
@@ -19,7 +19,7 @@ def main():
     if args.operation != 'record':
         return -1
 
-    op_spec = OperationSpec(args.operation, {"format.width": ["640"], "format.height": ["360"], "codec": ["xvid"]})
+    op_spec = OperationSpec(args.operation, to_attributes({"format.width": 640, "format.height": 360, "codec": "xvid"}))
     available_engines = mediator.request_operation(op_spec)
 
     if not available_engines.engines:
@@ -29,22 +29,16 @@ def main():
 
     selection = available_engines.engines[0]
 
-    client_format = ClientFormatSpec(selection.name,
-                                     {"format.width": ["640"], "format.height": ["360"], "codec": ["xvid"]})
+    client_format = ClientFormatSpec(selection.name, to_attributes({"format.width": 640, "format.height": 360}))
     stream_spec = mediator.establish_format(client_format)
     print(stream_spec)
     mediator.close()
 
-    # todo: use agreement for connection
-    address = stream_spec.engineAddress.split(":")
-    tup_addr = (address[0], int(address[1]))
+    engine_client = EngineClient(stream_spec)
+    engine_client.open()
 
-    engine_client = EngineClient(tup_addr)
-    agreement = {"sessionId": "12345", "config": {"width": 640, "height": 360, "colorMode": 1}}
-    engine_client.open(agreement)
-
-    if not engine_client.handshake:
-        print('handshake failed')
+    if not engine_client.acknowledged:
+        print('engine stream could not be initiated')
         engine_client.close()
         return
 
