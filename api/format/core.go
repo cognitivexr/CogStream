@@ -20,7 +20,7 @@ var ColorModes []ColorMode = []ColorMode{RGB, RGBA, Gray, BGR, BGRA, HLS, Lab, L
 type Orientation int
 
 const (
-	// see https://sirv.sirv.com/website/exif-orientation-values.jpg
+	// see https://sirv.com/help/articles/rotate-photos-to-be-upright/
 
 	TopLeft     Orientation = iota + 1 // = 0 degrees: the correct orientation, no adjustment is required.
 	TopRight                           // = 0 degrees, mirrored: image has been flipped back-to-front.
@@ -33,6 +33,50 @@ const (
 )
 
 var Orientations []Orientation = []Orientation{TopLeft, TopRight, BottomRight, BottomLeft, LeftTop, RightTop, RightBottom, LeftBottom}
+
+func (o Orientation) Angle() int {
+	switch o {
+	case TopLeft:
+		return 0
+	case TopRight:
+		return 0
+	case BottomRight:
+		return 180
+	case BottomLeft:
+		return 180
+	case LeftTop:
+		return 90
+	case RightTop:
+		return 90
+	case RightBottom:
+		return 270
+	case LeftBottom:
+		return 270
+	}
+	return 0
+}
+
+func (o Orientation) Mirrored() bool {
+	switch o {
+	case TopLeft:
+		return false
+	case TopRight:
+		return true
+	case BottomRight:
+		return false
+	case BottomLeft:
+		return true
+	case LeftTop:
+		return true
+	case RightTop:
+		return false
+	case RightBottom:
+		return true
+	case LeftBottom:
+		return false
+	}
+	return false
+}
 
 type Format struct {
 	Width       int         `json:"width"`
