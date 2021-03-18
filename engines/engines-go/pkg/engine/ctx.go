@@ -45,7 +45,7 @@ func NewStreamContext(parent context.Context, metadata *StreamMetadata) context.
 
 func InitStream(ctx context.Context, r io.Reader) error {
 	// read packet header
-	n, err := readPacketHeader(r)
+	n, err := readInt(r)
 	if err != nil {
 		return err
 	}

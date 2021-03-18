@@ -8,32 +8,57 @@ import (
 )
 
 const DefaultBufferSize = 1.5e+6 // 1.5MB
+const FramePacketHeaderSize = 24
 
-type FrameScanner struct {
-	r   io.Reader
-	lr  *io.LimitedReader
+type FramePacketHeader struct {
+	StreamId         uint32
+	FrameId          uint32
+	TimestampSeconds uint32
+	TimestampNanos   uint32
+	MetadataLen      uint32
+	DataLen          uint32
+}
 
-	buf   *bytes.Buffer
-	frame []byte
+type FramePacket struct {
+	Header   FramePacketHeader
+	Metadata []byte
+	Data     []byte
+}
+
+type FramePacketScanner struct {
+	r io.Reader // r holds the underlying reader
+
+	hLr  *io.LimitedReader // hLr is the limited reader for the packet header
+	hBuf *bytes.Buffer     // hBuf is a buffer to read the packet header
+	bLr  *io.LimitedReader // bLr is the limited reader for the packet body
+	bBuf *bytes.Buffer     // bBuf is a buffer to read the packet body
+
+	frame *FramePacket // last read frame
 
 	done bool
 	err  error
 }
 
-func NewFrameScanner(r io.Reader) *FrameScanner {
-	buf := bytes.NewBuffer(make([]byte, DefaultBufferSize))
-	buf.Reset()
+func NewFramePacketScanner(r io.Reader) *FramePacketScanner {
+	bBuf := bytes.NewBuffer(make([]byte, DefaultBufferSize))
+	bBuf.Reset()
 
-	return &FrameScanner{
+	hBuf := bytes.NewBuffer(make([]byte, FramePacketHeaderSize))
+	hBuf.Reset()
+
+	return &FramePacketScanner{
 		r:    r,
-		lr:   &io.LimitedReader{R: r, N: 0},
-		buf:  buf,
+		bLr:  &io.LimitedReader{R: r, N: 0},
+		hLr:  &io.LimitedReader{R: r, N: FramePacketHeaderSize},
+		hBuf: hBuf,
+		bBuf: bBuf,
 		done: false,
 	}
 }
 
-func (s *FrameScanner) Next() bool {
-	packet, err := s.readPacket()
+func (s *FramePacketScanner) Next() bool {
+	var packet FramePacket
+	err := s.readPacket(&packet)
 
 	if err != nil {
 		s.err = err
@@ -41,15 +66,19 @@ func (s *FrameScanner) Next() bool {
 		return false
 	}
 
-	s.frame = packet
+	s.frame = &packet
 	return true
 }
 
-func (s *FrameScanner) Err() error {
+func (s *FramePacketScanner) Get() *FramePacket {
+	return s.frame
+}
+
+func (s *FramePacketScanner) Err() error {
 	return s.err
 }
 
-func readPacketHeader(r io.Reader) (int64, error) {
+func readInt(r io.Reader) (int64, error) {
 	bufInt := make([]byte, 4)
 	if _, err := r.Read(bufInt); err != nil {
 		return -1, err
@@ -58,29 +87,82 @@ func readPacketHeader(r io.Reader) (int64, error) {
 	return int64(n), nil
 }
 
-func (s *FrameScanner) readPacket() (data []byte, err error) {
-	n, err := readPacketHeader(s.r)
+func nextUint32(buf *bytes.Buffer) uint32 {
+	return binary.LittleEndian.Uint32(buf.Next(4))
+}
+
+func (s *FramePacketScanner) readPacketHeader(header *FramePacketHeader) error {
+	buf := s.hBuf
+	buf.Reset()
+	s.hLr.N = FramePacketHeaderSize
+
+	n, err := buf.ReadFrom(s.hLr)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	if n != FramePacketHeaderSize {
+		return fmt.Errorf("expected %d header bytes, read %d", FramePacketHeaderSize, n)
+	}
+
+	header.StreamId = nextUint32(buf)
+	header.FrameId = nextUint32(buf)
+	header.TimestampSeconds = nextUint32(buf)
+	header.TimestampNanos = nextUint32(buf)
+	header.MetadataLen = nextUint32(buf)
+	header.DataLen = nextUint32(buf)
+
+	return nil
+}
+
+func (s *FramePacketScanner) readPacket(packet *FramePacket) error {
+	err := s.readPacketHeader(&packet.Header)
+	if err != nil {
+		return err
+	}
+
+	n := int(packet.Header.DataLen + packet.Header.MetadataLen)
 
 	// prepare limited reader to read the packet length exactly from the underlying reader
-	if s.buf.Len() != 0 {
-		panic(fmt.Sprintf("packet buffer should be empty, was %d", s.buf.Len()))
+	buf := s.bBuf
+	if buf.Len() != 0 {
+		panic(fmt.Sprintf("packet buffer should be empty, was %d", buf.Len()))
 	}
-	s.lr.N = n
+	s.bLr.N = int64(n)
 
 	// prepare buffer to read into
-	s.buf.Reset()
-	s.buf.Grow(int(n)) // make sure we have enough space
+	buf.Reset()
+	buf.Grow(n) // make sure we have enough space
 
 	// read packet data into buffer
-	_, err = s.buf.ReadFrom(s.lr)
+	read, err := buf.ReadFrom(s.bLr)
 	if err != nil {
-		return
+		return err
+	}
+	if read != int64(n) {
+		return fmt.Errorf("expected %d packet bytes, read %d", n, read)
 	}
 
-	data = make([]byte, n)
-	_, err = s.buf.Read(data)
-	return
+	// read optional metadata
+	if packet.Header.MetadataLen > 0 {
+		packet.Metadata = make([]byte, packet.Header.MetadataLen)
+		n, err = buf.Read(packet.Metadata)
+		if err != nil {
+			return err
+		}
+		if n != int(packet.Header.MetadataLen) {
+			return fmt.Errorf("expected %d metadata bytes, received %d", packet.Header.MetadataLen, n)
+		}
+	}
+
+	// read data
+	packet.Data = make([]byte, packet.Header.DataLen)
+	n, err = buf.Read(packet.Data)
+	if err != nil {
+		return err
+	}
+	if n != int(packet.Header.DataLen) {
+		return fmt.Errorf("expected %d data bytes, received %d", packet.Header.DataLen, n)
+	}
+
+	return nil
 }

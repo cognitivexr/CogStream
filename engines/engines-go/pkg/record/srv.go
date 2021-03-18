@@ -12,7 +12,7 @@ import (
 )
 
 func SaveVideoHandler(ctx context.Context, e *engines.Engine, conn net.Conn) error {
-	frames := make(chan []byte, 30)
+	frames := make(chan *engine.FramePacket, 30)
 	images := make(chan gocv.Mat)
 
 	metadata := engine.NewStreamMetadata()
