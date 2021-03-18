@@ -6,7 +6,7 @@ import (
 	"net"
 )
 
-func ConnectionHandler(ctx context.Context, conn net.Conn, frames chan<- []byte) {
+func ConnectionHandler(ctx context.Context, conn net.Conn, frames chan<- *FramePacket) {
 	remoteAddr := conn.RemoteAddr()
 	log.Printf("[%s] accepted connection\n", remoteAddr)
 	defer func() {
@@ -14,7 +14,7 @@ func ConnectionHandler(ctx context.Context, conn net.Conn, frames chan<- []byte)
 		conn.Close()
 	}()
 
-	scanner := NewFrameScanner(conn)
+	scanner := NewFramePacketScanner(conn)
 
 	for scanner.Next() {
 		if scanner.Err() != nil {
@@ -22,7 +22,7 @@ func ConnectionHandler(ctx context.Context, conn net.Conn, frames chan<- []byte)
 			break
 		}
 
-		frame := scanner.frame
+		frame := scanner.Get()
 		frames <- frame
 	}
 }

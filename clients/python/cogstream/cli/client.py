@@ -2,7 +2,8 @@ import argparse
 
 import cv2
 
-from cogstream.client import MediatorClient, EngineClient, stream_camera, OperationSpec, ClientFormatSpec, to_attributes
+from cogstream.client import MediatorClient, OperationSpec, ClientFormatSpec, to_attributes
+from cogstream.engine.client import EngineClient, stream_camera
 
 
 def main():

@@ -45,7 +45,21 @@ TODO: document handshake
 Streaming protocol
 ------------------
 
-A packet consists of:
+Streaming is initiated between a client and an engine by first sending the negotiated StreamSpec, serialized as UTF-8 encoded JSON.
+The packet is prefixed with an uint32 (4 byte little endian) to indicate the string length.
 
-* 4 byte little endian unsigned integer to encode the packet length
-* the image encoded as 8bit uint array
+The remaining packets on the connection are of type `FramePacket`, which are encoded as follows:
+
+    +----------+------------------------+
+    | Offset   | Field                  |
+    +----------+------------------------+
+    |        0 | Stream Id              | HEADER (little endian uint32 fields)
+    |        4 | Frame Id               |
+    |        8 | Unixtime seconds       |
+    |       12 | Unixtime nanoseconds   |
+    |       16 | Metadata length (L_m)  |
+    |       20 | Data length (L_d)      |
+    +----------+------------------------+
+    |       24 | Metadata               | BODY
+    | 24 + L_m | Data                   |
+    +----------+------------------------+

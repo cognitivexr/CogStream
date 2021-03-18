@@ -10,7 +10,7 @@ import (
 
 // TODO: separate transport (JPEG channel, bitmap channel, ...) and stream (source format, engine format)
 
-func ImageDecoder(ctx context.Context, source <-chan []byte, dest chan<- gocv.Mat) {
+func ImageDecoder(ctx context.Context, source <-chan *FramePacket, dest chan<- gocv.Mat) {
 	metadata, ok := GetStreamMetadata(ctx)
 	if !ok {
 		log.Println("could not get stream metadata from context")
@@ -51,7 +51,7 @@ func ImageDecoder(ctx context.Context, source <-chan []byte, dest chan<- gocv.Ma
 		}
 
 		//then := time.Now()
-		img, err := gocv.IMDecode(frame, flags)
+		img, err := gocv.IMDecode(frame.Data, flags)
 		if err != nil {
 			log.Println("error while decoding image", err)
 			break
