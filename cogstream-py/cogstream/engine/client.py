@@ -7,7 +7,7 @@ import time
 import cv2
 import numpy as np
 
-from cogstream.client import StreamSpec
+from cogstream.mediator.client import StreamSpec
 from cogstream.engine.channel import JpegSendChannel, FrameSendChannel, Frame
 from cogstream.engine.io import SocketFrameWriter
 from cogstream.typing import deep_to_dict

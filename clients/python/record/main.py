@@ -3,7 +3,8 @@ import logging
 
 import cv2
 
-from cogstream.client import MediatorClient, OperationSpec, ClientFormatSpec, to_attributes
+from cogstream.api import OperationSpec, ClientFormatSpec, to_attributes
+from cogstream.mediator.client import MediatorClient
 from cogstream.engine.client import EngineClient, stream_camera
 
 
