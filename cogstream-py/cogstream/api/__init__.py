@@ -1,3 +1,4 @@
+from cogstream.api.engines import EngineDescriptor, Specification, StreamMetadata
 from cogstream.api.messages import AttributeBuilder, Attributes, AvailableEngines, ClientFormatSpec, EngineSpec, \
     OperationSpec, StreamSpec, to_attributes
 
@@ -12,4 +13,7 @@ __all__ = [
     'OperationSpec',
     'StreamSpec',
     'to_attributes',
+    'EngineDescriptor',
+    'Specification',
+    'StreamMetadata'
 ]

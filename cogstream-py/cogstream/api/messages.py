@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import List, Dict, Tuple
 
+from cogstream.api.format import Format, ColorMode, Orientation
+
 Attributes = Dict[str, List[str]]
 
 
@@ -73,3 +75,20 @@ class AttributeBuilder:
 
     def build(self) -> Attributes:
         return self._attributes
+
+
+def format_from_attributes(attrs: Attributes) -> Format:
+    width = int(attrs.get('format.width', [0])[0])
+    height = int(attrs.get('format.height', [0])[0])
+    # TODO: consider string values of color mode
+    color_mode = ColorMode(int(attrs.get('format.colorMode', [0])[0]))
+    orientation = Orientation(int(attrs.get('format.orientation', [0])[0]))
+
+    return Format(width, height, color_mode, orientation)
+
+
+def format_to_attributes(f: Format, attrs: Attributes):
+    attrs['format.width'] = [str(f.width)]
+    attrs['format.height'] = [str(f.height)]
+    attrs['format.colorMode'] = [str(f.color_mode.value)]
+    attrs['format.orientation'] = [str(f.orientation.value)]
