@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-func SaveVideoHandler(ctx context.Context, e *engines.Engine, conn net.Conn) error {
+func SaveVideoHandler(ctx context.Context, e *engines.EngineDescriptor, conn net.Conn) error {
 	frames := make(chan *engine.FramePacket, 30)
 	images := make(chan gocv.Mat)
 
@@ -48,7 +48,7 @@ func SaveVideoHandler(ctx context.Context, e *engines.Engine, conn net.Conn) err
 
 // ServeSingle creates a server socket, accepts one connection, and then closes the server socket before initializing
 // the engine.
-func ServeSingle(ctx context.Context, engine *engines.Engine, network string, address string) error {
+func ServeSingle(ctx context.Context, engine *engines.EngineDescriptor, network string, address string) error {
 	ln, err := net.Listen(network, address)
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func ServeSingle(ctx context.Context, engine *engines.Engine, network string, ad
 	return SaveVideoHandler(ctx, engine, conn)
 }
 
-func Serve(ctx context.Context, engine *engines.Engine, network string, address string) {
+func Serve(ctx context.Context, engine *engines.EngineDescriptor, network string, address string) {
 	ln, err := net.Listen(network, address)
 	if err != nil {
 		log.Fatal(err)

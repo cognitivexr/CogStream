@@ -6,13 +6,13 @@ import (
 )
 
 type EngineFinder interface {
-	ListEngines() []*engines.Engine
-	FindEngines(engines.Specification) []*engines.Engine
-	FindEngineByName(string) (*engines.Engine, bool)
+	ListEngines() []*engines.EngineDescriptor
+	FindEngines(engines.Specification) []*engines.EngineDescriptor
+	FindEngineByName(string) (*engines.EngineDescriptor, bool)
 }
 
 type EngineRuntime interface {
-	StartEngine(engine *engines.Engine, attributes messages.Attributes) (*engines.RunningEngine, error)
+	StartEngine(engine *engines.EngineDescriptor, attributes messages.Attributes) (*engines.RunningEngine, error)
 	StopEngine(*engines.RunningEngine) error
 	ListRunning() []*engines.RunningEngine
 }

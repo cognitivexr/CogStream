@@ -11,7 +11,7 @@ import (
 func main() {
 	ctx := context.Background()
 
-	engine := &engines.Engine{
+	engine := &engines.EngineDescriptor{
 		Name: "record",
 		Specification: engines.Specification{
 			Operation:   messages.OperationRecord,

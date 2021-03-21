@@ -55,7 +55,7 @@ func (d *DummyPlatform) GetAvailableEngines(hs *HandshakeContext) (*messages.Ava
 	return availableEngines, nil
 }
 
-func mapAvailableEngines(engine *engines.Engine, engineSpec *messages.EngineSpec) {
+func mapAvailableEngines(engine *engines.EngineDescriptor, engineSpec *messages.EngineSpec) {
 	engineSpec.Name = engine.Name
 	engineSpec.Attributes.Set("format.width", strconv.Itoa(engine.Specification.InputFormat.Width))
 	engineSpec.Attributes.Set("format.height", strconv.Itoa(engine.Specification.InputFormat.Height))

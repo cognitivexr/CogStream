@@ -13,13 +13,13 @@ type Specification struct {
 	Attributes  messages.Attributes    `json:"attributes"`
 }
 
-type Engine struct {
+type EngineDescriptor struct {
 	Name          string        `json:"name"`
 	Specification Specification `json:"specification"`
 }
 
 type RunningEngine struct {
-	Engine
+	EngineDescriptor
 	RuntimeId string
 	Address   messages.EngineAddress
 	Started   time.Time

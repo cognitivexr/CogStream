@@ -20,7 +20,7 @@ type PluginEngine struct {
 	Path   string
 	Plugin *plugin.Plugin
 	Runner engines.PluginEngineRunner
-	Engine *engines.Engine
+	Engine *engines.EngineDescriptor
 }
 
 func OpenPluginEngine(pluginPath string) (*PluginEngine, error) {
@@ -96,8 +96,8 @@ func (p *pluginEngineRuntime) LoadPlugins() error {
 	return nil
 }
 
-func (p *pluginEngineRuntime) ListEngines() []*engines.Engine {
-	list := make([]*engines.Engine, 0)
+func (p *pluginEngineRuntime) ListEngines() []*engines.EngineDescriptor {
+	list := make([]*engines.EngineDescriptor, 0)
 	for _, pluginEngine := range p.availableEngines {
 		list = append(list, pluginEngine.Engine)
 	}
@@ -109,13 +109,13 @@ func engineMatches(engine *PluginEngine, specification engines.Specification) bo
 	return true
 }
 
-func (p *pluginEngineRuntime) getPluginEngine(engine *engines.Engine) (*PluginEngine, bool) {
+func (p *pluginEngineRuntime) getPluginEngine(engine *engines.EngineDescriptor) (*PluginEngine, bool) {
 	pe, ok := p.availableEngines[engine.Name]
 	return pe, ok
 }
 
-func (p *pluginEngineRuntime) FindEngines(specification engines.Specification) []*engines.Engine {
-	candidates := make([]*engines.Engine, 0)
+func (p *pluginEngineRuntime) FindEngines(specification engines.Specification) []*engines.EngineDescriptor {
+	candidates := make([]*engines.EngineDescriptor, 0)
 
 	for _, pluginEngine := range p.availableEngines {
 		if engineMatches(pluginEngine, specification) {
@@ -126,7 +126,7 @@ func (p *pluginEngineRuntime) FindEngines(specification engines.Specification) [
 	return candidates
 }
 
-func (p *pluginEngineRuntime) FindEngineByName(name string) (*engines.Engine, bool) {
+func (p *pluginEngineRuntime) FindEngineByName(name string) (*engines.EngineDescriptor, bool) {
 	for _, pluginEngine := range p.availableEngines {
 		e := pluginEngine.Engine
 		if e.Name == name {
@@ -152,7 +152,7 @@ func newRunningEngineContext() *runningEngineContext {
 	return reCtx
 }
 
-func (p *pluginEngineRuntime) StartEngine(engine *engines.Engine, attributes messages.Attributes) (*engines.RunningEngine, error) {
+func (p *pluginEngineRuntime) StartEngine(engine *engines.EngineDescriptor, attributes messages.Attributes) (*engines.RunningEngine, error) {
 	pluginEngine, ok := p.getPluginEngine(engine)
 	if !ok {
 		return nil, fmt.Errorf("could not find plugin engine for %s", engine.Name)
@@ -182,10 +182,10 @@ func (p *pluginEngineRuntime) StartEngine(engine *engines.Engine, attributes mes
 		}
 	}()
 
-	log.Info("waiting on engine %s(%s) to start", ctx.runningEngine.Engine.Name, runtimeId)
+	log.Info("waiting on engine %s(%s) to start", ctx.runningEngine.EngineDescriptor.Name, runtimeId)
 	// FIXME: should also return on context cancellation
 	ctx.started.Wait()
-	log.Info("engine %s(%s) started", ctx.runningEngine.Engine.Name, runtimeId)
+	log.Info("engine %s(%s) started", ctx.runningEngine.EngineDescriptor.Name, runtimeId)
 
 	return ctx.runningEngine, nil
 }
@@ -211,13 +211,13 @@ func (p *pluginEngineRuntime) ListRunning() []*engines.RunningEngine {
 	return running
 }
 
-func ParseSpec(specFilePath string) (*engines.Engine, error) {
+func ParseSpec(specFilePath string) (*engines.EngineDescriptor, error) {
 	data, err := ioutil.ReadFile(specFilePath)
 	if err != nil {
 		return nil, err
 	}
 
-	var engine engines.Engine
+	var engine engines.EngineDescriptor
 	err = json.Unmarshal(data, &engine)
 	if err != nil {
 		return nil, err
