@@ -25,96 +25,37 @@ type FramePacket struct {
 	Data     []byte
 }
 
-type FramePacketScanner struct {
-	r io.Reader // r holds the underlying reader
-
-	hLr  *io.LimitedReader // hLr is the limited reader for the packet header
-	hBuf *bytes.Buffer     // hBuf is a buffer to read the packet header
-	bLr  *io.LimitedReader // bLr is the limited reader for the packet body
-	bBuf *bytes.Buffer     // bBuf is a buffer to read the packet body
-
-	frame *FramePacket // last read frame
-
-	done bool
-	err  error
+// FramePacketReader reads FramePacket instances from an underlying stream.
+type FramePacketReader interface {
+	ReadPacket(packet *FramePacket) error
 }
 
-func NewFramePacketScanner(r io.Reader) *FramePacketScanner {
+func NewFramePacketReader(r io.Reader) FramePacketReader {
 	bBuf := bytes.NewBuffer(make([]byte, DefaultBufferSize))
 	bBuf.Reset()
 
 	hBuf := bytes.NewBuffer(make([]byte, FramePacketHeaderSize))
 	hBuf.Reset()
 
-	return &FramePacketScanner{
+	return &framePacketReader{
 		r:    r,
 		bLr:  &io.LimitedReader{R: r, N: 0},
 		hLr:  &io.LimitedReader{R: r, N: FramePacketHeaderSize},
 		hBuf: hBuf,
 		bBuf: bBuf,
-		done: false,
 	}
 }
 
-func (s *FramePacketScanner) Next() bool {
-	var packet FramePacket
-	err := s.readPacket(&packet)
+type framePacketReader struct {
+	r io.Reader // r holds the underlying reader
 
-	if err != nil {
-		s.err = err
-		s.done = true
-		return false
-	}
-
-	s.frame = &packet
-	return true
+	hLr  *io.LimitedReader // hLr is the limited reader for the packet header
+	hBuf *bytes.Buffer     // hBuf is a buffer to read the packet header
+	bLr  *io.LimitedReader // bLr is the limited reader for the packet body
+	bBuf *bytes.Buffer     // bBuf is a buffer to read the packet body
 }
 
-func (s *FramePacketScanner) Get() *FramePacket {
-	return s.frame
-}
-
-func (s *FramePacketScanner) Err() error {
-	return s.err
-}
-
-func readInt(r io.Reader) (int64, error) {
-	bufInt := make([]byte, 4)
-	if _, err := r.Read(bufInt); err != nil {
-		return -1, err
-	}
-	n := binary.LittleEndian.Uint32(bufInt)
-	return int64(n), nil
-}
-
-func nextUint32(buf *bytes.Buffer) uint32 {
-	return binary.LittleEndian.Uint32(buf.Next(4))
-}
-
-func (s *FramePacketScanner) readPacketHeader(header *FramePacketHeader) error {
-	buf := s.hBuf
-	buf.Reset()
-	s.hLr.N = FramePacketHeaderSize
-
-	n, err := buf.ReadFrom(s.hLr)
-	if err != nil {
-		return err
-	}
-	if n != FramePacketHeaderSize {
-		return fmt.Errorf("expected %d header bytes, read %d", FramePacketHeaderSize, n)
-	}
-
-	header.StreamId = nextUint32(buf)
-	header.FrameId = nextUint32(buf)
-	header.TimestampSeconds = nextUint32(buf)
-	header.TimestampNanos = nextUint32(buf)
-	header.MetadataLen = nextUint32(buf)
-	header.DataLen = nextUint32(buf)
-
-	return nil
-}
-
-func (s *FramePacketScanner) readPacket(packet *FramePacket) error {
+func (s *framePacketReader) ReadPacket(packet *FramePacket) error {
 	err := s.readPacketHeader(&packet.Header)
 	if err != nil {
 		return err
@@ -165,4 +106,79 @@ func (s *FramePacketScanner) readPacket(packet *FramePacket) error {
 	}
 
 	return nil
+}
+
+func (s *framePacketReader) readPacketHeader(header *FramePacketHeader) error {
+	buf := s.hBuf
+	buf.Reset()
+	s.hLr.N = FramePacketHeaderSize
+
+	n, err := buf.ReadFrom(s.hLr)
+	if err != nil {
+		return err
+	}
+	if n != FramePacketHeaderSize {
+		return fmt.Errorf("expected %d header bytes, read %d", FramePacketHeaderSize, n)
+	}
+
+	header.StreamId = nextUint32(buf)
+	header.FrameId = nextUint32(buf)
+	header.TimestampSeconds = nextUint32(buf)
+	header.TimestampNanos = nextUint32(buf)
+	header.MetadataLen = nextUint32(buf)
+	header.DataLen = nextUint32(buf)
+
+	return nil
+}
+
+// FramePacketScanner uses a FramePacketReader to create iterator-like interface and takes care of memory allocation.
+type FramePacketScanner struct {
+	r FramePacketReader
+
+	frame *FramePacket // last read frame
+
+	done bool
+	err  error
+}
+
+func NewFramePacketScanner(r FramePacketReader) *FramePacketScanner {
+	return &FramePacketScanner{
+		r:    r,
+		done: false,
+	}
+}
+
+func (s *FramePacketScanner) Next() bool {
+	var packet FramePacket
+	err := s.r.ReadPacket(&packet)
+
+	if err != nil {
+		s.err = err
+		s.done = true
+		return false
+	}
+
+	s.frame = &packet
+	return true
+}
+
+func (s *FramePacketScanner) Get() *FramePacket {
+	return s.frame
+}
+
+func (s *FramePacketScanner) Err() error {
+	return s.err
+}
+
+func readInt(r io.Reader) (int64, error) {
+	bufInt := make([]byte, 4)
+	if _, err := r.Read(bufInt); err != nil {
+		return -1, err
+	}
+	n := binary.LittleEndian.Uint32(bufInt)
+	return int64(n), nil
+}
+
+func nextUint32(buf *bytes.Buffer) uint32 {
+	return binary.LittleEndian.Uint32(buf.Next(4))
 }
