@@ -1,7 +1,8 @@
-package engine
+package stream
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -118,6 +119,9 @@ func (s *framePacketReader) readPacketHeader(header *FramePacketHeader) error {
 		return err
 	}
 	if n != FramePacketHeaderSize {
+		if n == 0 {
+			return io.EOF
+		}
 		return fmt.Errorf("expected %d header bytes, read %d", FramePacketHeaderSize, n)
 	}
 
@@ -145,6 +149,14 @@ func NewFramePacketScanner(r FramePacketReader) *FramePacketScanner {
 	return &FramePacketScanner{
 		r:    r,
 		done: false,
+	}
+}
+
+func (s *FramePacketScanner) Scan(ctx context.Context) (*FramePacket, error) {
+	if s.Next() {
+		return s.frame, nil
+	} else {
+		return nil, s.Err()
 	}
 }
 

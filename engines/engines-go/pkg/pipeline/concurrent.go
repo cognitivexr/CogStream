@@ -5,11 +5,7 @@ import (
 	"fmt"
 )
 
-func (p *Pipeline) RunConcurrent(ctx context.Context) error {
-	return runConcurrentPipeline(ctx, p)
-}
-
-func runConcurrentPipeline(ctx context.Context, p *Pipeline) error {
+func (p *Pipeline) RunConcurrent(ctx context.Context, results EngineResultWriter) error {
 	if p.Scanner == nil {
 		return fmt.Errorf("pipeline scanner is nil")
 	}
@@ -30,14 +26,12 @@ func runConcurrentPipeline(ctx context.Context, p *Pipeline) error {
 	packets := make(FramePacketChannel)
 	decoded := make(FrameChannel)
 	transformed := make(FrameChannel)
-	results := make(EngineResultChannel)
 
 	defer func() {
 		close(errs)
 		close(packets)
 		close(decoded)
 		close(transformed)
-		close(results)
 	}()
 
 	go RunEngine(ctx, p.Engine, transformed, results, errs)
@@ -79,7 +73,10 @@ func RunScanner(ctx context.Context, scanner Scanner, packets FramePacketWriter,
 func RunDecoder(ctx context.Context, d Decoder, src FramePacketChannel, dst FrameWriter, errs chan<- error) {
 	for {
 		select {
-		case framePacket := <-src:
+		case framePacket, more := <-src:
+			if !more {
+				return
+			}
 			err := d.Decode(ctx, framePacket, dst)
 			if err != nil {
 				errs <- err

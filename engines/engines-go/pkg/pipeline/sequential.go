@@ -1,7 +1,7 @@
 package pipeline
 
 import (
-	"cognitivexr.at/cogstream/engines/pkg/engine"
+	"cognitivexr.at/cogstream/engines/pkg/stream"
 	"context"
 	"fmt"
 )
@@ -27,7 +27,7 @@ type decoderPipe struct {
 	dst FrameWriter
 }
 
-func (d *decoderPipe) WriteFramePacket(packet *engine.FramePacket) error {
+func (d *decoderPipe) WriteFramePacket(packet *stream.FramePacket) error {
 	return d.Decode(d.ctx, packet, d.dst)
 }
 

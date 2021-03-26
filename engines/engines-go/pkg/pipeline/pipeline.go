@@ -1,12 +1,15 @@
 package pipeline
 
 import (
-	"cognitivexr.at/cogstream/engines/pkg/engine"
+	"cognitivexr.at/cogstream/engines/pkg/stream"
 	"context"
+	"errors"
 	"gocv.io/x/gocv"
 )
 
 // ============================== data holders
+
+var Stop = errors.New("stop pipeline")
 
 type Frame struct {
 	FrameId int
@@ -29,11 +32,11 @@ type FrameWriter interface {
 }
 
 type FramePacketWriter interface {
-	WriteFramePacket(packet *engine.FramePacket) error
+	WriteFramePacket(packet *stream.FramePacket) error
 }
 
 type FrameChannel chan *Frame
-type FramePacketChannel chan *engine.FramePacket
+type FramePacketChannel chan *stream.FramePacket
 type EngineResultChannel chan *EngineResult
 
 func (ch FrameChannel) WriteFrame(f *Frame) error {
@@ -41,7 +44,7 @@ func (ch FrameChannel) WriteFrame(f *Frame) error {
 	return nil
 }
 
-func (ch FramePacketChannel) WriteFramePacket(packet *engine.FramePacket) error {
+func (ch FramePacketChannel) WriteFramePacket(packet *stream.FramePacket) error {
 	ch <- packet
 	return nil
 }
@@ -51,14 +54,21 @@ func (ch EngineResultChannel) WriteResult(r *EngineResult) error {
 	return nil
 }
 
+type noopEngineResultWriter struct {}
+func (n *noopEngineResultWriter) WriteResult(result *EngineResult) error {
+	return nil
+}
+
+var NoopEngineResultWriter EngineResultWriter = &noopEngineResultWriter{}
+
 // ============================= function interfaces
 
 type Scanner interface {
-	Scan(context.Context) (*engine.FramePacket, error)
+	Scan(context.Context) (*stream.FramePacket, error)
 }
 
 type Decoder interface {
-	Decode(ctx context.Context, packet *engine.FramePacket, dest FrameWriter) error
+	Decode(ctx context.Context, packet *stream.FramePacket, dest FrameWriter) error
 }
 
 type Transformer interface {
@@ -87,15 +97,15 @@ func (p *Pipeline) Cancel() {
 
 // functional types for Pipeline interfaces
 
-type ScannerFunction func(context.Context) (*engine.FramePacket, error)
+type ScannerFunction func(context.Context) (*stream.FramePacket, error)
 
-func (s ScannerFunction) Scan(ctx context.Context) (*engine.FramePacket, error) {
+func (s ScannerFunction) Scan(ctx context.Context) (*stream.FramePacket, error) {
 	return s(ctx)
 }
 
-type DecoderFunction func(ctx context.Context, packet *engine.FramePacket) (*Frame, error)
+type DecoderFunction func(ctx context.Context, packet *stream.FramePacket) (*Frame, error)
 
-func (d DecoderFunction) Decode(ctx context.Context, packet *engine.FramePacket, dest FrameWriter) error {
+func (d DecoderFunction) Decode(ctx context.Context, packet *stream.FramePacket, dest FrameWriter) error {
 	frame, err := d(ctx, packet)
 	if err != nil {
 		return err

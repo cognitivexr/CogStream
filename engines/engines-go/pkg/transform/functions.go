@@ -67,6 +67,11 @@ func Pipeline(fns ...Function) Function {
 // TODO: specify scaling type if necessary (letterbox, scale, ...)
 func BuildTransformer(source format.Format, target format.Format) (Function, error) {
 	log.Printf("building transformer for format %v -> %v", source, target)
+
+	if target == format.AnyFormat {
+		return NoTransform, nil
+	}
+
 	fns := make([]Function, 0)
 
 	// TODO: could optimize by first checking whether target size < source size, and if so do the scaling first

@@ -1,15 +1,15 @@
 package decoder
 
 import (
-	"cognitivexr.at/cogstream/engines/pkg/engine"
 	"cognitivexr.at/cogstream/engines/pkg/pipeline"
+	"cognitivexr.at/cogstream/engines/pkg/stream"
 	"context"
 	"gocv.io/x/gocv"
 )
 
-type Decoder func(packet *engine.FramePacket) (*gocv.Mat, error)
+type Decoder func(packet *stream.FramePacket) (*gocv.Mat, error)
 
-func (d Decoder) Decode(_ context.Context, packet *engine.FramePacket, dest pipeline.FrameWriter) error {
+func (d Decoder) Decode(_ context.Context, packet *stream.FramePacket, dest pipeline.FrameWriter) error {
 	mat, err := d(packet)
 	if err != nil {
 		return err
@@ -18,7 +18,7 @@ func (d Decoder) Decode(_ context.Context, packet *engine.FramePacket, dest pipe
 	return dest.WriteFrame(frame)
 }
 
-var colorImageDecoder = func(packet *engine.FramePacket) (*gocv.Mat, error) {
+var colorImageDecoder = func(packet *stream.FramePacket) (*gocv.Mat, error) {
 	mat, err := gocv.IMDecode(packet.Data, gocv.IMReadColor)
 	return &mat, err
 }

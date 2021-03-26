@@ -2,7 +2,7 @@ package main
 
 import (
 	"cognitivexr.at/cogstream/api/engines"
-	"cognitivexr.at/cogstream/engines/pkg/record"
+	"cognitivexr.at/cogstream/engines/pkg/engines/recorder"
 	"context"
 )
 
@@ -10,7 +10,7 @@ type runner struct {
 }
 
 func (r *runner) Run(ctx context.Context, engine *engines.EngineDescriptor, address string) error {
-	err := record.ServeSingle(ctx, engine, "tcp", address)
+	err := recorder.ServeSingle(ctx, engine, "tcp", address)
 	return err
 }
 
