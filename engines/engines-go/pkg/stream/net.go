@@ -1,4 +1,4 @@
-package engine
+package stream
 
 import (
 	"context"
@@ -14,7 +14,7 @@ func ConnectionHandler(ctx context.Context, conn net.Conn, frames chan<- *FrameP
 		conn.Close()
 	}()
 
-	scanner := NewFramePacketScanner(conn)
+	scanner := NewFramePacketScanner(NewFramePacketReader(conn))
 
 	for scanner.Next() {
 		if scanner.Err() != nil {

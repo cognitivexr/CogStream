@@ -2,6 +2,8 @@ package transform
 
 import (
 	"cognitivexr.at/cogstream/api/format"
+	"cognitivexr.at/cogstream/engines/pkg/pipeline"
+	"context"
 	"gocv.io/x/gocv"
 	"image"
 	"log"
@@ -11,6 +13,16 @@ import (
 type Function func(src gocv.Mat, dst *gocv.Mat)
 
 var NoTransform Function = func(src gocv.Mat, dst *gocv.Mat) {}
+
+// Transform is a binding between Function and pipeline.Transformer.
+func (f Function) Transform(ctx context.Context, src *pipeline.Frame, dest pipeline.FrameWriter) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
+	f(*src.Mat, src.Mat)
+	return dest.WriteFrame(src)
+}
 
 func funcEqual(a, b interface{}) bool {
 	av := reflect.ValueOf(&a).Elem()
@@ -55,6 +67,11 @@ func Pipeline(fns ...Function) Function {
 // TODO: specify scaling type if necessary (letterbox, scale, ...)
 func BuildTransformer(source format.Format, target format.Format) (Function, error) {
 	log.Printf("building transformer for format %v -> %v", source, target)
+
+	if target == format.AnyFormat {
+		return NoTransform, nil
+	}
+
 	fns := make([]Function, 0)
 
 	// TODO: could optimize by first checking whether target size < source size, and if so do the scaling first

@@ -1,4 +1,4 @@
-package engine
+package stream
 
 import (
 	"cognitivexr.at/cogstream/api/format"
@@ -15,22 +15,22 @@ type contextKey struct {
 }
 
 var (
-	StreamMetadataKey = &contextKey{name: "stream-metadata"}
+	MetadataKey = &contextKey{name: "stream-metadata"}
 )
 
-type StreamMetadata struct {
-	spec *messages.StreamSpec
+type Metadata struct {
+	StreamSpec *messages.StreamSpec
 
 	ClientFormat format.Format
 	EngineFormat format.Format
 }
 
-func NewStreamMetadata() *StreamMetadata {
-	return new(StreamMetadata)
+func NewMetadata() *Metadata {
+	return new(Metadata)
 }
 
-func GetStreamMetadata(ctx context.Context) (metadata *StreamMetadata, ok bool) {
-	metadata, ok = ctx.Value(StreamMetadataKey).(*StreamMetadata)
+func GetMetadata(ctx context.Context) (metadata *Metadata, ok bool) {
+	metadata, ok = ctx.Value(MetadataKey).(*Metadata)
 	return
 }
 
@@ -39,8 +39,8 @@ func GetAttributes(ctx context.Context) (attr messages.Attributes, ok bool) {
 	return
 }
 
-func NewStreamContext(parent context.Context, metadata *StreamMetadata) context.Context {
-	return context.WithValue(parent, StreamMetadataKey, metadata)
+func ContextWithMetadata(parent context.Context, metadata *Metadata) context.Context {
+	return context.WithValue(parent, MetadataKey, metadata)
 }
 
 func InitStream(ctx context.Context, r io.Reader) error {
@@ -50,12 +50,12 @@ func InitStream(ctx context.Context, r io.Reader) error {
 		return err
 	}
 
-	// de-serialize stream spec json
+	// de-serialize stream StreamSpec json
 	lr := io.LimitReader(r, n)
 	spec := new(messages.StreamSpec)
 	err = json.NewDecoder(lr).Decode(spec)
 	if err != nil {
-		return fmt.Errorf("unable to decode stream spec: %v", err)
+		return fmt.Errorf("unable to decode stream StreamSpec: %v", err)
 	}
 	log.Printf("deserialized StreamSpec: %v", spec)
 
@@ -64,7 +64,7 @@ func InitStream(ctx context.Context, r io.Reader) error {
 		return fmt.Errorf("unable to determine client input format: %v", err)
 	}
 
-	metadata, ok := GetStreamMetadata(ctx)
+	metadata, ok := GetMetadata(ctx)
 	if ok && metadata != nil {
 		metadata.ClientFormat = clientFormat
 		log.Printf("setting ClientFormat in metadata %v", clientFormat)

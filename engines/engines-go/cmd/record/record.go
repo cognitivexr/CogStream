@@ -4,7 +4,7 @@ import (
 	"cognitivexr.at/cogstream/api/engines"
 	"cognitivexr.at/cogstream/api/format"
 	"cognitivexr.at/cogstream/api/messages"
-	"cognitivexr.at/cogstream/engines/pkg/record"
+	"cognitivexr.at/cogstream/engines/pkg/engines/recorder"
 	"context"
 )
 
@@ -19,5 +19,5 @@ func main() {
 			Attributes:  messages.NewAttributes(),
 		},
 	}
-	record.Serve(ctx, engine, "tcp", "0.0.0.0:53210")
+	recorder.Serve(ctx, engine, "tcp", "0.0.0.0:53210")
 }
