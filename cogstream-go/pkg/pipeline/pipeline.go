@@ -1,7 +1,7 @@
 package pipeline
 
 import (
-	"cognitivexr.at/cogstream/engines/pkg/stream"
+	"cognitivexr.at/cogstream/pkg/stream"
 	"context"
 	"errors"
 	"gocv.io/x/gocv"
@@ -54,7 +54,8 @@ func (ch EngineResultChannel) WriteResult(r *EngineResult) error {
 	return nil
 }
 
-type noopEngineResultWriter struct {}
+type noopEngineResultWriter struct{}
+
 func (n *noopEngineResultWriter) WriteResult(result *EngineResult) error {
 	return nil
 }
@@ -93,7 +94,6 @@ type Pipeline struct {
 func (p *Pipeline) Cancel() {
 	p.cancel()
 }
-
 
 // functional types for Pipeline interfaces
 

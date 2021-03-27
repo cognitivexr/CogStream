@@ -1,7 +1,7 @@
 package recorder
 
 import (
-	"cognitivexr.at/cogstream/engines/pkg/pipeline"
+	"cognitivexr.at/cogstream/pkg/pipeline"
 	"context"
 	"errors"
 	"gocv.io/x/gocv"

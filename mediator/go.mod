@@ -1,4 +1,4 @@
-module cognitivexr.at/cogstream
+module cognitivexr.at/cogstream/mediator
 
 go 1.16
 

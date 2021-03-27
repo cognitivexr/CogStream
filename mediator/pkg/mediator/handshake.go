@@ -2,7 +2,7 @@ package mediator
 
 import (
 	"cognitivexr.at/cogstream/api/messages"
-	"cognitivexr.at/cogstream/pkg/util"
+	"cognitivexr.at/cogstream/mediator/pkg/util"
 	"math/rand"
 	"time"
 )

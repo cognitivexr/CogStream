@@ -2,10 +2,10 @@ package recorder
 
 import (
 	"cognitivexr.at/cogstream/api/engines"
-	"cognitivexr.at/cogstream/engines/pkg/decoder"
-	"cognitivexr.at/cogstream/engines/pkg/pipeline"
-	"cognitivexr.at/cogstream/engines/pkg/stream"
-	"cognitivexr.at/cogstream/engines/pkg/transform"
+	"cognitivexr.at/cogstream/pkg/decoder"
+	"cognitivexr.at/cogstream/pkg/pipeline"
+	"cognitivexr.at/cogstream/pkg/stream"
+	"cognitivexr.at/cogstream/pkg/transform"
 	"context"
 	"fmt"
 	"log"

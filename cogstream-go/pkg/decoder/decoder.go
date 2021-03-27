@@ -1,8 +1,8 @@
 package decoder
 
 import (
-	"cognitivexr.at/cogstream/engines/pkg/pipeline"
-	"cognitivexr.at/cogstream/engines/pkg/stream"
+	"cognitivexr.at/cogstream/pkg/pipeline"
+	"cognitivexr.at/cogstream/pkg/stream"
 	"context"
 	"gocv.io/x/gocv"
 )

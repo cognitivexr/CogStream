@@ -3,8 +3,8 @@ package runtime
 import (
 	"cognitivexr.at/cogstream/api/engines"
 	"cognitivexr.at/cogstream/api/messages"
-	"cognitivexr.at/cogstream/pkg/log"
-	"cognitivexr.at/cogstream/pkg/util"
+	"cognitivexr.at/cogstream/mediator/pkg/log"
+	"cognitivexr.at/cogstream/mediator/pkg/util"
 	"context"
 	"encoding/json"
 	"fmt"

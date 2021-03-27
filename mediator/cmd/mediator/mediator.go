@@ -1,9 +1,9 @@
 package main
 
 import (
-	"cognitivexr.at/cogstream/cmd/mediator/app"
-	"cognitivexr.at/cogstream/pkg/log"
-	"cognitivexr.at/cogstream/pkg/mediator"
+	"cognitivexr.at/cogstream/mediator/cmd/mediator/app"
+	"cognitivexr.at/cogstream/mediator/pkg/log"
+	"cognitivexr.at/cogstream/mediator/pkg/mediator"
 	"flag"
 	"fmt"
 	"net/http"

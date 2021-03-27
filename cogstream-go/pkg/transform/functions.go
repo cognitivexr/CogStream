@@ -2,7 +2,7 @@ package transform
 
 import (
 	"cognitivexr.at/cogstream/api/format"
-	"cognitivexr.at/cogstream/engines/pkg/pipeline"
+	"cognitivexr.at/cogstream/pkg/pipeline"
 	"context"
 	"gocv.io/x/gocv"
 	"image"

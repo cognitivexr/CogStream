@@ -3,8 +3,8 @@ package mediator
 import (
 	"cognitivexr.at/cogstream/api/engines"
 	"cognitivexr.at/cogstream/api/messages"
-	"cognitivexr.at/cogstream/pkg/log"
-	"cognitivexr.at/cogstream/pkg/runtime"
+	"cognitivexr.at/cogstream/mediator/pkg/log"
+	"cognitivexr.at/cogstream/mediator/pkg/runtime"
 	"errors"
 	"fmt"
 	"strconv"

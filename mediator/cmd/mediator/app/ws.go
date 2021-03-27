@@ -2,7 +2,7 @@ package app
 
 import (
 	"cognitivexr.at/cogstream/api/messages"
-	"cognitivexr.at/cogstream/pkg/mediator"
+	"cognitivexr.at/cogstream/mediator/pkg/mediator"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"

@@ -1,7 +1,7 @@
 package pipeline
 
 import (
-	"cognitivexr.at/cogstream/engines/pkg/stream"
+	"cognitivexr.at/cogstream/pkg/stream"
 	"context"
 	"fmt"
 )

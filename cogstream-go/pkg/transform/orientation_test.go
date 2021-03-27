@@ -42,5 +42,3 @@ func Test_getRotateFlag(t *testing.T) {
 		})
 	}
 }
-
-
