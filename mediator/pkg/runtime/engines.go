@@ -12,7 +12,7 @@ type EngineFinder interface {
 }
 
 type EngineRuntime interface {
-	StartEngine(engine *engines.EngineDescriptor, attributes messages.Attributes) (*engines.RunningEngine, error)
+	StartEngine(engine *engines.EngineDescriptor, spec messages.OperationSpec) (*engines.RunningEngine, error)
 	StopEngine(*engines.RunningEngine) error
 	ListRunning() []*engines.RunningEngine
 }

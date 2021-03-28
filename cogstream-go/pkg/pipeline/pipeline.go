@@ -91,6 +91,10 @@ type Pipeline struct {
 	cancel context.CancelFunc
 }
 
+func (p *Pipeline) ConfigureForStream(stream *stream.Stream) {
+	stream.AcceptConfigurators(p.Scanner, p.Decoder, p.Transformer, p.Engine)
+}
+
 func (p *Pipeline) Cancel() {
 	p.cancel()
 }

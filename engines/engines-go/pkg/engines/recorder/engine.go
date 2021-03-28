@@ -1,6 +1,10 @@
 package recorder
 
 import (
+	"cognitivexr.at/cogstream/api/engines"
+	"cognitivexr.at/cogstream/api/format"
+	"cognitivexr.at/cogstream/api/messages"
+	"cognitivexr.at/cogstream/pkg/engine"
 	"cognitivexr.at/cogstream/pkg/pipeline"
 	"context"
 	"errors"
@@ -9,6 +13,17 @@ import (
 	"sync"
 	"time"
 )
+
+var Descriptor = engines.EngineDescriptor{
+	Name: "record",
+	Specification: engines.Specification{
+		Operation:   messages.OperationRecord,
+		InputFormat: format.AnyFormat,
+		Attributes:  messages.NewAttributes(),
+	},
+}
+
+var Factory engine.Factory = &engineFactory{}
 
 type Engine struct {
 	writer *gocv.VideoWriter
@@ -20,6 +35,16 @@ type Engine struct {
 
 	buffer chan *pipeline.Frame
 	mutex  sync.Mutex
+}
+
+type engineFactory struct{}
+
+func (e *engineFactory) Descriptor() engines.EngineDescriptor {
+	return Descriptor
+}
+
+func (e *engineFactory) NewEngine() pipeline.Engine {
+	return NewEngine()
 }
 
 func NewEngine() *Engine {

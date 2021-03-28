@@ -16,7 +16,19 @@ type Stream struct {
 	ctx      context.Context
 }
 
-type Configurator func(stream *Stream)
+type Configurator interface {
+	ConfigureForStream(stream *Stream)
+}
+
+func (s *Stream) AcceptConfigurators(configurators ...interface{}) {
+	for _, obj := range configurators {
+		cfg, ok := obj.(Configurator)
+		if !ok {
+			continue
+		}
+		cfg.ConfigureForStream(s)
+	}
+}
 
 func (s *Stream) Metadata() *Metadata {
 	return s.metadata

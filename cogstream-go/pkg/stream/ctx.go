@@ -19,7 +19,8 @@ var (
 )
 
 type Metadata struct {
-	StreamSpec *messages.StreamSpec
+	OperationSpec *messages.OperationSpec
+	StreamSpec    *messages.StreamSpec
 
 	ClientFormat format.Format
 	EngineFormat format.Format
