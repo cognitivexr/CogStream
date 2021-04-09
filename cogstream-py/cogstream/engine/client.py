@@ -7,9 +7,10 @@ import time
 import cv2
 import numpy as np
 
-from cogstream.mediator.client import StreamSpec
-from cogstream.engine.channel import JpegSendChannel, FrameSendChannel, Frame
+from cogstream.engine.channel import JpegSendChannel, FrameSendChannel
+from cogstream.engine.engine import Frame
 from cogstream.engine.io import SocketFrameWriter
+from cogstream.mediator.client import StreamSpec
 from cogstream.typing import deep_to_dict
 
 logger = logging.getLogger(__name__)

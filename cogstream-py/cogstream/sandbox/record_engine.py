@@ -24,7 +24,7 @@ class Recorder(Engine):
     def setup(self):
         self.out = cv2.VideoWriter('/tmp/after.mp4', cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), 25, (800, 600))
 
-    def process(self, frame: Frame):
+    def process(self, frame: Frame, _writer):
         self.out.write(frame.image)
 
     def close(self):

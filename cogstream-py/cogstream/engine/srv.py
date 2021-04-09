@@ -8,9 +8,9 @@ from typing import Callable, Union
 from cogstream.api import StreamSpec
 from cogstream.api.engines import StreamMetadata
 from cogstream.api.messages import format_from_attributes
-from cogstream.engine.channel import JpegReceiveChannel, FrameReceiveChannel, Frame
-from cogstream.engine.engine import Engine, EngineResult
-from cogstream.engine.io import SocketFrameScanner, socket_recv
+from cogstream.engine.channel import JpegReceiveChannel, EngineChannel, JsonResultSendChannel
+from cogstream.engine.engine import Engine, Frame
+from cogstream.engine.io import SocketFrameScanner, socket_recv, SocketResultWriter
 from cogstream.engine.transform import build_transformer
 from cogstream.typing import deep_from_dict
 
@@ -56,6 +56,7 @@ def serve(address: Address, connection_handler: ConnectionHandler):
 
 
 def _socket_recv_stream_spec(sock) -> StreamSpec:
+    # TODO: this is pretty ad-hoc and should be part of the streaming protocol
     header = socket_recv(sock, 4)
     data_len = struct.unpack('<I', header)[0]
 
@@ -67,7 +68,7 @@ def _socket_recv_stream_spec(sock) -> StreamSpec:
     return deep_from_dict(doc, StreamSpec)
 
 
-def _start_stream(engine: Engine, channel: FrameReceiveChannel, metadata: StreamMetadata):
+def _start_stream(engine: Engine, channel: EngineChannel, metadata: StreamMetadata):
     transform = build_transformer(metadata.client_format, metadata.engine_format)
 
     while True:
@@ -84,17 +85,21 @@ def _start_stream(engine: Engine, channel: FrameReceiveChannel, metadata: Stream
             tf_frame = Frame(image, frame.frame_id, frame.metadata, frame.timestamp)
 
             # call engine
-            processed = engine.process(tf_frame)
-            result = EngineResult(tf_frame.frame_id, time.time(), processed)
-
-            # TODO: actually return
-            logger.debug('engine result: %s', result)
+            engine.process(tf_frame, channel)
 
         except ConnectionResetError:
             logger.debug('stopping stream due to ConnectionResetError')
             break
 
         logger.debug('receiving packet bytes took %.2fms', ((time.time() - then) * 1000))
+
+
+def _create_channel(sock, _spec: StreamSpec, _metadata: StreamMetadata):
+    # todo: determine from stream metadata
+    in_channel = JpegReceiveChannel(SocketFrameScanner(sock))
+    out_channel = JsonResultSendChannel(0, SocketResultWriter(sock))
+
+    return EngineChannel(in_channel, out_channel)
 
 
 def _stream_handler(sock, engine_factory: EngineFactory, spec: StreamSpec):
@@ -104,8 +109,7 @@ def _stream_handler(sock, engine_factory: EngineFactory, spec: StreamSpec):
     engine = engine_factory(metadata)
     metadata.engine_format = engine.get_descriptor().specification.input_format
 
-    # todo: determine from stream metadata
-    channel = JpegReceiveChannel(SocketFrameScanner(sock))
+    channel = _create_channel(sock, spec, metadata)
     try:
         engine.setup()
         _start_stream(engine, channel, metadata)

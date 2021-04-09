@@ -4,7 +4,7 @@ import cv2.cv2 as cv2
 
 from cogstream.api import EngineDescriptor, StreamMetadata, Specification
 from cogstream.api.format import Format, Orientation, ColorMode
-from cogstream.engine import serve_engine, Engine, Frame
+from cogstream.engine import serve_engine, Engine, Frame, EngineResultWriter
 
 
 class Recorder(Engine):
@@ -24,7 +24,7 @@ class Recorder(Engine):
         dim = (self.format.width, self.format.height)
         self.out = cv2.VideoWriter(self.target_file, cv2.VideoWriter_fourcc(*self.codec), self.fps, dim)
 
-    def process(self, frame: Frame):
+    def process(self, frame: Frame, writer: EngineResultWriter):
         self.out.write(frame.image)
 
     def close(self):
