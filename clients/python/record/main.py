@@ -3,7 +3,7 @@ import logging
 
 import cv2
 
-from cogstream.api import OperationSpec, ClientFormatSpec, to_attributes
+from cogstream.api import OperationSpec, ClientFormatSpec, StreamSpec, to_attributes
 from cogstream.mediator.client import MediatorClient
 from cogstream.engine.client import EngineClient, stream_camera
 
@@ -21,29 +21,37 @@ def main():
 
     args = parser.parse_args()
 
-    mediator = MediatorClient(args.host, args.port)
+    # mediator = MediatorClient(args.host, args.port)
 
-    op_spec = OperationSpec('record', to_attributes({
+    # op_spec = OperationSpec('record', to_attributes({
+    #     "format.width": args.record_width,
+    #     "format.height": args.record_height,
+    #     "codec": "xvid"
+    # }))
+    # available_engines = mediator.request_operation(op_spec)
+
+    # if not available_engines.engines:
+    #     print("error: no available engine")
+    #     return -1
+
+    # # todo: select for real
+    # selection = available_engines.engines[0]
+
+    # client_format = ClientFormatSpec(selection.name, to_attributes({
+    #     "format.width": args.capture_width,
+    #     "format.height": args.capture_height,
+    #     "format.colorMode": "RGB",
+    # }))
+
+    # stream_spec = mediator.establish_format(client_format)
+    # mediator.close()
+    
+    stream_spec = StreamSpec('127.0.0.1:53210', to_attributes({
         "format.width": args.record_width,
         "format.height": args.record_height,
-        "codec": "xvid"
+        "format.orientation": 1,
+        "format.colorMode": 1
     }))
-    available_engines = mediator.request_operation(op_spec)
-
-    if not available_engines.engines:
-        print("error: no available engine")
-        return -1
-
-    # todo: select for real
-    selection = available_engines.engines[0]
-
-    client_format = ClientFormatSpec(selection.name, to_attributes({
-        "format.width": args.capture_width,
-        "format.height": args.capture_height,
-        "format.colorMode": "RGB",
-    }))
-    stream_spec = mediator.establish_format(client_format)
-    mediator.close()
 
     engine_client = EngineClient(stream_spec)
     engine_client.open()
