@@ -1,7 +1,7 @@
 from typing import NamedTuple
 
-from cogstream.api.messages import StreamSpec, Attributes
 from cogstream.api.format import Format
+from cogstream.api.messages import StreamSpec, Attributes
 
 
 class Specification(NamedTuple):

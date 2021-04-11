@@ -173,3 +173,6 @@ dmypy.json
 
 pyvenv.cfg
 pip-selfcheck.json
+
+# pytorch models
+*.pt

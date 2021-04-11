@@ -25,6 +25,8 @@ import types
 import typing
 from pydoc import locate
 
+import numpy as np
+
 if hasattr(typing, '_GenericAlias'):
     def _is_generic(cls):
         return isinstance(cls, typing._GenericAlias)
@@ -166,6 +168,9 @@ def deep_to_dict(obj):
 
     if isinstance(obj, (bool, int, float, str, bytes, bytearray)):
         return obj
+
+    if isinstance(obj, np.number):
+        return obj.item()
 
     if isinstance(obj, tuple):
         return tuple([deep_to_dict(a) for a in obj])

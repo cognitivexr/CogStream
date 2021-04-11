@@ -43,6 +43,8 @@ def _cv2_resize_with_scale(dim: Tuple[int, int]) -> Function:
 def _get_color_transform(from_color: ColorMode, to_color: ColorMode) -> Function:
     if from_color == to_color:
         return NoTransform
+    if from_color == ColorMode.UNKNOWN or to_color == ColorMode.UNKNOWN:
+        return NoTransform
 
     code = get_color_conversion_code(from_color, to_color)
     return _cv2_cvt_col(code)
@@ -69,6 +71,8 @@ def _pipeline(*fns) -> Function:
 
 def _get_orientation_transformation(source: Orientation, target: Orientation) -> Function:
     if source == target:
+        return NoTransform
+    if source == Orientation.UNKNOWN or target == Orientation.UNKNOWN:
         return NoTransform
 
     rotate, flip = NoTransform, NoTransform
