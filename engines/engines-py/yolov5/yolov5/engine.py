@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Any
 
@@ -6,16 +7,21 @@ from cogstream.api import EngineDescriptor, Specification
 from cogstream.api.format import Format, ColorMode
 from cogstream.engine import Engine, Frame, EngineResultWriter, EngineResult
 
+logger = logging.getLogger(__name__)
+
 
 class Yolov5(Engine):
 
-    def __init__(self, device=None) -> None:
+    def __init__(self, device=None, preload=True) -> None:
         super().__init__()
 
         self.device = device
         self.model = None
         self.names = []
         self.colors = []
+
+        if preload:
+            self.setup()
 
     def get_descriptor(self) -> EngineDescriptor:
         return EngineDescriptor(
@@ -42,9 +48,13 @@ class Yolov5(Engine):
 
             objects.append({'xyxy': list(xyxy), 'conf': conf, 'label': self.names[cls]})
 
+        logger.debug('writing inference result %s', objects)
         writer.write(EngineResult(frame.frame_id, time.time(), objects))
 
     def setup(self):
+        if self.model is not None:
+            return
+
         if self.device is None:
             self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
