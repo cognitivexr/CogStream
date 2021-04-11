@@ -6,10 +6,10 @@ import time
 
 import cv2
 import numpy as np
-
-from cogstream.engine.channel import JpegSendChannel, FrameSendChannel
+from cogstream.engine import EngineResult
+from cogstream.engine.channel import JpegSendChannel, ClientChannel, JsonResultReceiveChannel
 from cogstream.engine.engine import Frame
-from cogstream.engine.io import SocketFrameWriter
+from cogstream.engine.io import SocketFrameWriter, SocketResultScanner
 from cogstream.mediator.client import StreamSpec
 from cogstream.typing import deep_to_dict
 
@@ -30,13 +30,17 @@ def _send_stream_spec(sock, data: bytes):
 
 
 class EngineClient:
+    channel: ClientChannel
+
     def __init__(self, stream_spec: StreamSpec) -> None:
         super().__init__()
         self.stream_spec = stream_spec
         self.address = stream_spec.get_socket_address()
         self.sock = None
-        self.channel: FrameSendChannel = None
+        self.channel = None
         self.acknowledged = False
+
+        self.frame_cnt = 0
 
     def open(self):
         if self.sock is not None:
@@ -52,12 +56,20 @@ class EngineClient:
         _send_stream_spec(sock, doc.encode('UTF-8'))
 
         self.sock = sock
-        self.channel = JpegSendChannel(0, SocketFrameWriter(sock))
+        in_channel = JsonResultReceiveChannel(0, SocketResultScanner(sock))
+        out_channel = JpegSendChannel(0, SocketFrameWriter(sock))
+        self.channel = ClientChannel(in_channel, out_channel)
         self.acknowledged = True
 
-    def request(self, frame: np.ndarray):
-        self.channel.send(Frame(frame))
-        return 'ok'
+    def request(self, frame: np.ndarray) -> EngineResult:
+        self.channel.send(Frame(frame, frame_id=self.frame_cnt))
+        # TODO: determine whether to read result synchronously from stream spec
+        self.frame_cnt += 1
+        return self.channel.recv_result()
+
+    def request_async(self, frame: np.ndarray):
+        self.channel.send(Frame(frame, frame_id=self.frame_cnt))
+        self.frame_cnt += 1
 
     def close(self):
         if self.sock is None:
@@ -87,7 +99,8 @@ def stream_camera(cam, client, show=True):
         if show:
             cv2.imshow("capture", frame)
 
-        client.request(frame)
+        result = client.request(frame)
+        logger.debug('received result %s', result)
 
         delay = ia - (time.time() - start)
         if delay >= 0:
