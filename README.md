@@ -45,8 +45,10 @@ TODO: document handshake
 Streaming protocol
 ------------------
 
-Streaming is initiated between a client and an engine by first sending the negotiated StreamSpec, serialized as UTF-8 encoded JSON.
+Streaming is initiated between a client and an engine by first sending the negotiated `StreamSpec`, serialized as UTF-8 encoded JSON.
 The packet is prefixed with an uint32 (4 byte little endian) to indicate the string length.
+
+### Frames
 
 The remaining packets on the connection are of type `FramePacket`, which are encoded as follows:
 
@@ -63,3 +65,21 @@ The remaining packets on the connection are of type `FramePacket`, which are enc
     |       24 | Metadata               | BODY
     | 24 + L_m | Data                   |
     +----------+------------------------+
+
+### Engine results
+
+Results of analytics engines are transported in `ResultPacket` instances that are structured in the same way only without the metadata field:
+
+    +----------+------------------------+
+    | Offset   | Field                  |
+    +----------+------------------------+
+    |        0 | Stream Id              | HEADER (little endian uint32 fields)
+    |        4 | Frame Id               |
+    |        8 | Unixtime seconds       |
+    |       12 | Unixtime nanoseconds   |
+    |       16 | Data length (L_d)      |
+    +----------+------------------------+
+    |       20 | Data                   | BODY
+    +----------+------------------------+
+
+The engine results data will have different formats, currently they are JSON encoded documents.
