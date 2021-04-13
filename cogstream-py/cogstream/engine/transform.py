@@ -1,3 +1,4 @@
+import logging
 from typing import Callable, Tuple
 
 import cv2.cv2 as cv2
@@ -5,11 +6,13 @@ import numpy as np
 
 from cogstream.api.format import ColorMode, Orientation, Format
 
+logger = logging.getLogger(__name__)
+
 Function = Callable[[np.ndarray], np.ndarray]
 
 
-def _no_transform(_: np.ndarray) -> np.ndarray:
-    return None
+def _no_transform(arr: np.ndarray) -> np.ndarray:
+    return arr
 
 
 def _cv2_cvt_col(code) -> Function:
@@ -131,6 +134,11 @@ def build_transformer(source: Format, target: Format) -> Function:
 
     if source.width != target.width or source.height != target.height:
         fns.append(_cv2_resize_with_scale((target.width, target.height)))
+
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug('built pipeline %s -> %s with functions:', source, target)
+        for fn in fns:
+            logger.debug(' - %s', fn)
 
     return Pipeline(*fns)
 
