@@ -3,7 +3,7 @@ import logging
 import socket
 import struct
 import time
-from typing import Callable, Union
+from typing import Callable, Union, Tuple
 
 from cogstream.api import StreamSpec
 from cogstream.api.engines import StreamMetadata
@@ -22,12 +22,29 @@ ConnectionHandler = Callable[[socket.socket, StreamSpec], None]
 EngineFactory = Callable[[StreamMetadata], Engine]
 
 
+def to_socket_address(addr: Address) -> Tuple[str, int]:
+    if isinstance(addr, tuple):
+        return addr
+
+    if isinstance(addr, str):
+        if '://' in addr:
+            scheme, addr = addr.split('://')
+
+        parts = addr.split(':')
+        if len(parts) == 1:
+            return parts[0], 0
+        if len(parts) == 2:
+            return parts[0], int(parts[1])
+
+    raise ValueError(f'invalid address {addr}')
+
+
 def serve(address: Address, connection_handler: ConnectionHandler):
-    logger.info('starting server on address %s', address)
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind(address)
+    server_socket.bind(to_socket_address(address))
     server_socket.listen(1)
+    logger.info('started server socket on address %s', server_socket.getsockname())
 
     conn = None
     try:

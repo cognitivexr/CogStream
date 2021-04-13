@@ -8,16 +8,14 @@ from cogstream.engine.client import EngineClient, stream_camera
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    parser = argparse.ArgumentParser(description='CogStream Client for recording videos')
-    parser.add_argument('--host', type=str, help='the mediator address', default='127.0.0.1')
-    parser.add_argument('--port', type=int, help='the mediator port (default 8191)', default=8191)
+    parser = argparse.ArgumentParser(description='CogStream Client for YOLOv5 engine')
 
     parser.add_argument('--capture-width', type=int, help='camera capture height', default=800)
     parser.add_argument('--capture-height', type=int, help='camera capture width', default=600)
 
     args = parser.parse_args()
 
-    stream_spec = StreamSpec('127.0.0.1:45671', to_attributes({
+    stream_spec = StreamSpec('127.0.0.1:54321', to_attributes({
         "format.width": args.capture_width,
         "format.height": args.capture_height,
         "format.orientation": 1,
