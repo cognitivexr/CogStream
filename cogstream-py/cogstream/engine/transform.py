@@ -4,7 +4,7 @@ from typing import Callable, Tuple
 import cv2.cv2 as cv2
 import numpy as np
 
-from cogstream.api.format import ColorMode, Orientation, Format
+from cogstream.api.format import ColorMode, Orientation, Format, AnyFormat
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +125,9 @@ def get_rotate_flag(from_angle: int, to_angle: int) -> int:
 
 
 def build_transformer(source: Format, target: Format) -> Function:
+    if target is AnyFormat:
+        return NoTransform
+
     fns = list()
 
     if ColorMode.UNKNOWN not in [source.color_mode, target.color_mode]:
