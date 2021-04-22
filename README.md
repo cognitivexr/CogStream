@@ -1,6 +1,10 @@
 CogStream
 =========
 
+⚠️ CogStream is work in progress and subject to rapid change, as well as poor documentation.
+
+---
+
 The CogStream video analytics system consists of four components:
 
 * `api`: shared API modules
