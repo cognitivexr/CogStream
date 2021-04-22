@@ -1,0 +1,22 @@
+{
+  "specificationVersion": "1.0",
+  "implementationVersion": "1.0",
+  "description": "FERPlus",
+  "modelServerVersion": "1.0",
+  "license": "Apache 2.0",
+  "runtime": "python",
+  "engine": {
+    "engineName": "MXNet",
+    "engineVersion": "^1.2"
+  },
+  "model": {
+    "modelName": "FERPlus",
+    "description": "FERPlus",
+    "modelVersion": "1.0",
+    "handler": "emotion_detection_service:handle"
+  },
+  "publisher": {
+    "author": "MXNet SDK team",
+    "email": "noreply@amazon.com"
+  }
+}
