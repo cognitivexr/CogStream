@@ -89,12 +89,13 @@ type Pipeline struct {
 	Decoder     Decoder
 	Transformer Transformer
 	Engine      Engine
+	Results     EngineResultWriter
 
 	cancel context.CancelFunc
 }
 
 func (p *Pipeline) ConfigureForStream(stream *stream.Stream) {
-	stream.AcceptConfigurators(p.Scanner, p.Decoder, p.Transformer, p.Engine)
+	stream.AcceptConfigurators(p.Scanner, p.Decoder, p.Transformer, p.Engine, p.Results)
 }
 
 func (p *Pipeline) Cancel() {

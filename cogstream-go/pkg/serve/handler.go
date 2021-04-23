@@ -32,16 +32,18 @@ func SequentialEngineHandler(ctx context.Context, conn net.Conn, factory engine.
 		return fmt.Errorf("error initializing transformation pipeline: %v", err)
 	}
 
+	// TODO: decoder and result writer should be determined from stream context and/or engine descriptor!
 	p := pipeline.Pipeline{
 		Scanner:     stream.NewFramePacketScanner(stream.NewFramePacketReader(s)),
 		Decoder:     decoder.ColorImageDecoder(),
 		Transformer: transformer,
 		Engine:      factory.NewEngine(),
+		Results:     pipeline.NewJsonResultWriter(stream.NewResultPacketWriter(s)),
 	}
 
 	s.AcceptConfigurators(p)
 
-	err = p.RunSequential(ctx, engineResultPrinter{}) // FIXME: how to know about how to return results?
+	err = p.RunSequential(ctx)
 
 	return err
 }

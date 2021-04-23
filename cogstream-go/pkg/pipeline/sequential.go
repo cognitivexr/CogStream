@@ -51,7 +51,7 @@ func (e *enginePipe) WriteFrame(frame *Frame) error {
 	return e.Process(e.ctx, frame, e.dst)
 }
 
-func (p *Pipeline) RunSequential(ctx context.Context, sink EngineResultWriter) error {
+func (p *Pipeline) RunSequential(ctx context.Context) error {
 	if p.Scanner == nil {
 		return fmt.Errorf("pipeline scanner is nil")
 	}
@@ -68,7 +68,7 @@ func (p *Pipeline) RunSequential(ctx context.Context, sink EngineResultWriter) e
 	ctx, cancelFunc := context.WithCancel(ctx)
 	p.cancel = cancelFunc
 
-	eng := &enginePipe{p.Engine, ctx, sink}
+	eng := &enginePipe{p.Engine, ctx, p.Results}
 	transformer := &transformerPipe{p.Transformer, ctx, eng}
 	decoder := &decoderPipe{p.Decoder, ctx, transformer}
 	scanner := &scannerPipe{p.Scanner, ctx, decoder}

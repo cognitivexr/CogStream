@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func (p *Pipeline) RunConcurrent(ctx context.Context, results EngineResultWriter) error {
+func (p *Pipeline) RunConcurrent(ctx context.Context) error {
 	if p.Scanner == nil {
 		return fmt.Errorf("pipeline scanner is nil")
 	}
@@ -26,14 +26,17 @@ func (p *Pipeline) RunConcurrent(ctx context.Context, results EngineResultWriter
 	packets := make(FramePacketChannel)
 	decoded := make(FrameChannel)
 	transformed := make(FrameChannel)
+	results := make(EngineResultChannel)
 
 	defer func() {
 		close(errs)
 		close(packets)
 		close(decoded)
 		close(transformed)
+		close(results)
 	}()
 
+	go RunResultWriter(ctx, results, p.Results, errs)
 	go RunEngine(ctx, p.Engine, transformed, results, errs)
 	go RunTransformer(ctx, p.Transformer, decoded, transformed, errs)
 	go RunDecoder(ctx, p.Decoder, packets, decoded, errs)
@@ -106,6 +109,20 @@ func RunEngine(ctx context.Context, e Engine, src FrameChannel, dst EngineResult
 		select {
 		case frame := <-src:
 			err := e.Process(ctx, frame, dst)
+			if err != nil {
+				errs <- err
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func RunResultWriter(ctx context.Context, src EngineResultChannel, dst EngineResultWriter, errs chan<- error) {
+	for {
+		select {
+		case result := <-src:
+			err := dst.WriteResult(result)
 			if err != nil {
 				errs <- err
 			}
