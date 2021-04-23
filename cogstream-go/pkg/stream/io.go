@@ -10,6 +10,7 @@ import (
 
 const DefaultBufferSize = 1.5e+6 // 1.5MB
 const FramePacketHeaderSize = 24
+const ResultPacketHeaderSize = 20
 
 type FramePacketHeader struct {
 	StreamId         uint32
@@ -26,9 +27,26 @@ type FramePacket struct {
 	Data     []byte
 }
 
+type ResultPacketHeader struct {
+	StreamId         uint32
+	FrameId          uint32
+	TimestampSeconds uint32
+	TimestampNanos   uint32
+	DataLen          uint32
+}
+
+type ResultPacket struct {
+	Header ResultPacketHeader
+	Data   []byte
+}
+
 // FramePacketReader reads FramePacket instances from an underlying stream.
 type FramePacketReader interface {
 	ReadPacket(packet *FramePacket) error
+}
+
+type ResultPacketWriter interface {
+	WritePacket(packet *ResultPacket) error
 }
 
 func NewFramePacketReader(r io.Reader) FramePacketReader {
@@ -133,6 +151,54 @@ func (s *framePacketReader) readPacketHeader(header *FramePacketHeader) error {
 	header.DataLen = nextUint32(buf)
 
 	return nil
+}
+
+type resultPacketWriter struct {
+	w   io.Writer     // w holds the underlying writer
+	buf *bytes.Buffer // buf is a buffer to serialize the packet header
+}
+
+func NewResultPacketWriter(w io.Writer) ResultPacketWriter {
+	buf := bytes.NewBuffer(make([]byte, ResultPacketHeaderSize))
+	buf.Reset()
+	return &resultPacketWriter{w: w, buf: buf}
+}
+
+func (r *resultPacketWriter) WritePacket(packet *ResultPacket) error {
+	buf := r.buf
+	buf.Reset()
+
+	header := packet.Header
+	header.DataLen = uint32(len(packet.Data))
+	putResultPacketHeader(buf, header)
+
+	_, err := buf.WriteTo(r.w)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.w.Write(packet.Data)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func putResultPacketHeader(buf *bytes.Buffer, header ResultPacketHeader) {
+	// FIXME: properly write uints directly to buffer
+	b := make([]byte, 4)
+
+	binary.LittleEndian.PutUint32(b, header.StreamId)
+	buf.Write(b)
+	binary.LittleEndian.PutUint32(b, header.FrameId)
+	buf.Write(b)
+	binary.LittleEndian.PutUint32(b, header.TimestampSeconds)
+	buf.Write(b)
+	binary.LittleEndian.PutUint32(b, header.TimestampNanos)
+	buf.Write(b)
+	binary.LittleEndian.PutUint32(b, header.DataLen)
+	buf.Write(b)
 }
 
 // FramePacketScanner uses a FramePacketReader to create iterator-like interface and takes care of memory allocation.

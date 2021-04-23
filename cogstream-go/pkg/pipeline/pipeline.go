@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"gocv.io/x/gocv"
+	"time"
 )
 
 // ============================== data holders
@@ -17,8 +18,9 @@ type Frame struct {
 }
 
 type EngineResult struct {
-	FrameId int
-	Result  interface{}
+	FrameId   int
+	Timestamp time.Time
+	Result    interface{}
 }
 
 // ============================= communication interfaces
