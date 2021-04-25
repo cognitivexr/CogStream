@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
 
 
 def create_engine(metadata=None) -> Engine:
-    return EmotionEngine()
+    engine = EmotionEngine()
+    engine.setup()
+    return engine
 
 
 def loade_face_detector():
@@ -75,6 +77,9 @@ class EmotionEngine(Engine):
         self.face_detector = None
 
     def setup(self):
+        if self._do_inference is not None:
+            return
+
         service = require_ferplus_service()
 
         def inference(data):
@@ -91,7 +96,6 @@ class EmotionEngine(Engine):
         return EngineDescriptor('fermx', Specification('analyze', AnyFormat))
 
     def process(self, frame: Frame, results: EngineResultWriter):
-
         gray = cv2.cvtColor(frame.image, cv2.COLOR_BGR2GRAY)
 
         faces = self.face_detector.detectMultiScale(
@@ -103,6 +107,7 @@ class EmotionEngine(Engine):
         )
 
         if len(faces) == 0:
+            results.write(EngineResult(frame.frame_id, time.time(), []))
             return
 
         result_payload = []

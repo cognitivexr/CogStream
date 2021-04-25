@@ -3,9 +3,11 @@ import logging
 import socket
 import struct
 import time
+from typing import Callable
 
 import cv2
 import numpy as np
+
 from cogstream.engine import EngineResult
 from cogstream.engine.channel import JpegSendChannel, ClientChannel, JsonResultReceiveChannel
 from cogstream.engine.engine import Frame
@@ -78,15 +80,16 @@ class EngineClient:
         logger.info('closing socket')
         self.sock.close()
 
-    def stream_camera(self, cam, show=True):
-        stream_camera(cam, self, show)
+
+EngineResultCallback = Callable[[np.ndarray, EngineResult], None]
 
 
-def stream_camera(cam, client, show=True):
-    goal_fps = 25
-
+def stream_camera(cam, client, show=True, max_fps=0, on_result: EngineResultCallback = None):
     # target frame inter-arrival time
-    ia = 1 / goal_fps
+    if max_fps:
+        ia = 1 / max_fps
+    else:
+        ia = 0
 
     while True:
         start = time.time()
@@ -99,15 +102,21 @@ def stream_camera(cam, client, show=True):
         if show:
             cv2.imshow("capture", frame)
 
-        result = client.request(frame)
-        logger.debug('received result %s', result)
+        if on_result is None:
+            client.request_async(frame)
+        else:
+            result = client.request(frame)
+            logger.debug('received result %s', result)
+            on_result(frame, result)
 
-        delay = ia - (time.time() - start)
-        if delay >= 0:
-            time.sleep(delay)
+        if ia > 0:
+            delay = ia - (time.time() - start)
+            if delay >= 0:
+                time.sleep(delay)
 
-        key = cv2.waitKey(1)
-        if key == ord('q'):
-            break
+        if show:
+            key = cv2.waitKey(1)
+            if key == ord('q'):
+                break
 
         logger.info('fps: %.2f' % (1 / (time.time() - start)))

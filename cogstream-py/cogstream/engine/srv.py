@@ -85,7 +85,7 @@ def _socket_recv_stream_spec(sock) -> StreamSpec:
     return deep_from_dict(doc, StreamSpec)
 
 
-def _start_stream(engine: Engine, channel: EngineChannel, metadata: StreamMetadata):
+def run_stream(engine: Engine, channel: EngineChannel, metadata: StreamMetadata):
     transform = build_transformer(metadata.client_format, metadata.engine_format)
 
     while True:
@@ -129,7 +129,7 @@ def _stream_handler(sock, engine_factory: EngineFactory, spec: StreamSpec):
     channel = _create_channel(sock, spec, metadata)
     try:
         engine.setup()
-        _start_stream(engine, channel, metadata)
+        run_stream(engine, channel, metadata)
     finally:
         engine.close()
 

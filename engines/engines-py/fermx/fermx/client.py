@@ -9,20 +9,26 @@ from cogstream.engine.client import EngineClient, stream_camera
 
 def on_result(frame, result: EngineResult):
     """
-    Main client code. Uses the EngineResult of the face engine to display a bounding box around the captured faces.
+    Main client code. Uses the EngineResult of the fermx engine to display a bounding box around the captured faces and
+    display their emotion.
 
     :param frame: the frame capture from the camera
     :param result: the EngineResult
     """
 
-    faces = result.result
-    if faces:
+    if result is not None:
         i = 0
-        for (x, y, w, h) in faces:
+
+        for item in result.result:
             i += 1
+            x, y, h, w = item['face']
+            emotion = item['emotions'][0]
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            face = frame[y:y + h, x:x + w]
-            cv2.imshow(f'face-{i}', face)
+            # face = frame[y:y + h, x:x + w]
+            # cv2.imshow(f'face-{i}', face)
+
+            label = emotion['class']
+            cv2.putText(frame, label, (x, y - 5), 0, 1, (20, 255, 20), thickness=2, lineType=cv2.LINE_AA)
 
     cv2.imshow('faces', frame)
 
@@ -33,7 +39,7 @@ def on_result(frame, result: EngineResult):
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    parser = argparse.ArgumentParser(description='CogStream Client for Faces engine')
+    parser = argparse.ArgumentParser(description='CogStream client for fermx')
 
     parser.add_argument('--capture-width', type=int, help='camera capture height', default=800)
     parser.add_argument('--capture-height', type=int, help='camera capture width', default=600)
