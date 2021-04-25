@@ -41,6 +41,8 @@ func SequentialEngineHandler(ctx context.Context, conn net.Conn, factory engine.
 		Results:     pipeline.NewJsonResultWriter(stream.NewResultPacketWriter(s)),
 	}
 
+	defer p.Close()
+
 	s.AcceptConfigurators(p)
 
 	err = p.RunSequential(ctx)

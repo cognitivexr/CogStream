@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"gocv.io/x/gocv"
+	"io"
 	"time"
 )
 
@@ -102,6 +103,11 @@ func (p *Pipeline) Cancel() {
 	p.cancel()
 }
 
+func (p *Pipeline) Close() error {
+	err := tryClose(p.Engine)
+	return err
+}
+
 // functional types for Pipeline interfaces
 
 type ScannerFunction func(context.Context) (*stream.FramePacket, error)
@@ -128,4 +134,11 @@ func (t TransformerFunction) Transform(ctx context.Context, src *Frame, dest Fra
 		return err
 	}
 	return dest.WriteFrame(frame)
+}
+
+func tryClose(obj interface{}) error {
+	if closer, ok := obj.(io.Closer); ok {
+		return closer.Close()
+	}
+	return nil
 }
