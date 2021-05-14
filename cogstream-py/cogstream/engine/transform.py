@@ -50,6 +50,7 @@ def _get_color_transform(from_color: ColorMode, to_color: ColorMode) -> Function
         return NoTransform
 
     code = get_color_conversion_code(from_color, to_color)
+    logger.info('transform color conversion: %s -> %s = %s', from_color, to_color, code)
     return _cv2_cvt_col(code)
 
 
@@ -82,6 +83,7 @@ def _get_orientation_transformation(source: Orientation, target: Orientation) ->
 
     rotate_flag = get_rotate_flag(source.angle(), target.angle())
     if rotate_flag >= 0:
+        logger.info('transform rotate flag: %s', rotate_flag)
         rotate = _cv2_rotate(rotate_flag)
 
     if source.mirrored() != target.mirrored():
@@ -135,8 +137,12 @@ def build_transformer(source: Format, target: Format) -> Function:
 
     fns.append(_get_orientation_transformation(source.orientation, target.orientation))
 
-    if source.width != target.width or source.height != target.height:
-        fns.append(_cv2_resize_with_scale((target.width, target.height)))
+    if target.width and target.height:
+        logger.debug('transform resize: width %d -> %d, height: %d -> %d',
+                     source.width, target.width, source.height, target.height)
+
+        if source.width != target.width or source.height != target.height:
+            fns.append(_cv2_resize_with_scale((target.width, target.height)))
 
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug('built pipeline %s -> %s with functions:', source, target)
