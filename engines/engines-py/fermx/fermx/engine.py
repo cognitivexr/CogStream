@@ -9,7 +9,7 @@ import zipfile
 import cv2
 import pkg_resources
 from cogstream.api import EngineDescriptor, Specification
-from cogstream.api.format import AnyFormat
+from cogstream.api.format import Format, ColorMode, Orientation
 from cogstream.engine import Engine, EngineResultWriter, Frame, EngineResult
 
 mar_url = 'https://s3.amazonaws.com/model-server/model_archive_1.0/FERPlus.mar'
@@ -93,10 +93,13 @@ class EmotionEngine(Engine):
         ...
 
     def get_descriptor(self) -> EngineDescriptor:
-        return EngineDescriptor('fermx', Specification('analyze', AnyFormat))
+        return EngineDescriptor('fermx', Specification('analyze', Format(
+            color_mode=ColorMode.Gray,
+            orientation=Orientation.TopLeft
+        )))
 
     def process(self, frame: Frame, results: EngineResultWriter):
-        gray = cv2.cvtColor(frame.image, cv2.COLOR_BGR2GRAY)
+        gray = frame.image
 
         faces = self.face_detector.detectMultiScale(
             gray,
@@ -120,6 +123,7 @@ class EmotionEngine(Engine):
             face_input = cv2.resize(face, (64, 64))
             emotions = self._do_inference(face_input)
             # cv2.imshow(f'emotion-{i}', face_input)
-            result_payload.append({'face': (x, y, w, h), 'emotions': emotions[0]})
+            labels = [{'probability': e['probability'], 'label': e['class']} for e in emotions[0]]
+            result_payload.append({'face': (x, y, w, h), 'emotions': labels})
 
         results.write(EngineResult(frame.frame_id, time.time(), result_payload))

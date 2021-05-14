@@ -44,7 +44,7 @@ def main():
                     face = frame[y:y + h, x:x + w]
                     cv2.imshow(f'face-{i}', face)
 
-                    label = emotion['class']
+                    label = emotion['label']
                     cv2.putText(frame, label, (x, y - 5), 0, 1, (20, 255, 20), thickness=2, lineType=cv2.LINE_AA)
 
                 cv2.imshow('result', frame)
