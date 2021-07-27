@@ -3,13 +3,16 @@ package webrtc
 import (
 	"cognitivexr.at/cogstream/pkg/pipeline"
 	"cognitivexr.at/cogstream/pkg/util"
+	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"github.com/pion/rtcp"
 	"github.com/pion/webrtc/v3"
 	"github.com/pion/webrtc/v3/pkg/media/ivfwriter"
 	"gocv.io/x/gocv"
 	"io"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -20,14 +23,17 @@ const (
 )
 
 type Pipeline struct {
-	config *webrtc.Configuration
-	conn   *webrtc.PeerConnection
-	ivf    *ivfwriter.IVFWriter
-	out    io.Reader
-	engine pipeline.Engine
+	config          *webrtc.Configuration
+	conn            *webrtc.PeerConnection
+	ivf             *ivfwriter.IVFWriter
+	out             io.Reader
+	engine          pipeline.Engine
+	rdb             *redis.Client
+	offerChannel    string
+	responseChannel string
 }
 
-func NewWebRtcPipeline(in io.Writer, out io.Reader) *Pipeline {
+func NewWebRtcPipeline(in io.Writer, out io.Reader, rdb *redis.Client, offerChannel string, responseChannel string) *Pipeline {
 	config := &webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
@@ -42,10 +48,13 @@ func NewWebRtcPipeline(in io.Writer, out io.Reader) *Pipeline {
 	}
 
 	p := Pipeline{
-		config: config,
-		conn:   nil,
-		out:    out,
-		ivf:    ivfWriter,
+		config:          config,
+		conn:            nil,
+		out:             out,
+		ivf:             ivfWriter,
+		rdb:             rdb,
+		offerChannel:    offerChannel,
+		responseChannel: responseChannel,
 	}
 	return &p
 }
@@ -85,13 +94,27 @@ func (p *Pipeline) writeToIvf(track *webrtc.TrackRemote, receiver *webrtc.RTPRec
 	}
 }
 
+func (p *Pipeline) waitForRemoteSessionDescription() string {
+	ctx := context.Background()
+	pubsub := p.rdb.Subscribe(ctx, p.offerChannel)
+	defer pubsub.Close()
+
+	for {
+		msg, err := pubsub.ReceiveMessage(ctx)
+		if err != nil {
+			panic(err)
+		}
+		return strings.TrimSpace(msg.Payload)
+	}
+}
+
 func (p *Pipeline) ListenForIceConnection() {
 	p.conn.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		log.Printf("connection state change: %s", connectionState.String())
 	})
 
 	offer := webrtc.SessionDescription{}
-	util.Decode(util.MustReadStdin(), &offer)
+	util.Decode(p.waitForRemoteSessionDescription(), &offer)
 
 	err := p.conn.SetRemoteDescription(offer)
 	if err != nil {
@@ -113,13 +136,13 @@ func (p *Pipeline) ListenForIceConnection() {
 	<-gatherComplete
 }
 
-// PrintDescription TODO: do this programmatically?
 func (p *Pipeline) PrintDescription() {
 	fmt.Println(util.Encode(*p.conn.LocalDescription()))
+	p.rdb.Publish(context.TODO(), p.responseChannel, util.Encode(*p.conn.LocalDescription()))
 }
 
 func (p *Pipeline) RunSequential() {
-	window := gocv.NewWindow("test")
+	window := gocv.NewWindow("received video")
 	defer window.Close()
 
 	for {

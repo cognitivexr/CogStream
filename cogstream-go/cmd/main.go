@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"cognitivexr.at/cogstream/pkg/webrtc"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"log"
 	"os/exec"
 	"strconv"
@@ -23,6 +24,12 @@ func main() {
 	ffmpegOut, _ := ffmpeg.StdoutPipe()
 	ffmpegErr, _ := ffmpeg.StderrPipe()
 
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
 	// kill off program if ffmpeg fails
 	if err := ffmpeg.Start(); err != nil {
 		panic(err)
@@ -36,7 +43,10 @@ func main() {
 		}
 	}()
 
-	ppl := webrtc.NewWebRtcPipeline(ffmpegIn, ffmpegOut)
+	offerChannel := "offer"
+	responseChannel := "response"
+
+	ppl := webrtc.NewWebRtcPipeline(ffmpegIn, ffmpegOut, rdb, offerChannel, responseChannel)
 	ppl.SetUpPeer()
 	ppl.ListenForIceConnection()
 	log.Printf("connected!")
