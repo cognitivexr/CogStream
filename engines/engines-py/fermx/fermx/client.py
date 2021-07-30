@@ -41,12 +41,14 @@ def main():
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(description='CogStream client for fermx')
 
+    parser.add_argument('--host', type=str, help='the engine host', default='127.0.0.1')
+    parser.add_argument('--port', type=int, help='the engine port (default 54321)', default=54321)
     parser.add_argument('--capture-width', type=int, help='camera capture height', default=800)
     parser.add_argument('--capture-height', type=int, help='camera capture width', default=600)
 
     args = parser.parse_args()
 
-    stream_spec = StreamSpec('127.0.0.1:54321', to_attributes({
+    stream_spec = StreamSpec(f'{args.host}:{args.port}', to_attributes({
         "format.width": args.capture_width,
         "format.height": args.capture_height,
         "format.orientation": 1,
