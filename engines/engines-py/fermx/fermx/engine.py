@@ -101,6 +101,11 @@ class EmotionEngine(Engine):
     def process(self, frame: Frame, results: EngineResultWriter):
         gray = frame.image
 
+        #cv2.imshow('faces', gray)
+        #key = cv2.waitKey(1)
+        #if key == ord('q'):
+        #    raise KeyboardInterrupt
+
         faces = self.face_detector.detectMultiScale(
             gray,
             scaleFactor=1.2,
