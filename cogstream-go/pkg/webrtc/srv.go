@@ -1,24 +1,17 @@
-package main
+package webrtc
 
 import (
 	"bufio"
-	"cognitivexr.at/cogstream/pkg/webrtc"
+	"cognitivexr.at/cogstream/pkg/engine"
+	"context"
 	"fmt"
 	"github.com/go-redis/redis/v8"
-	"log"
 	"os/exec"
 	"strconv"
 )
 
-const (
-	frameX      = 960
-	frameY      = 720
-	frameSize   = frameX * frameY * 3
-	minimumArea = 3000
-)
+func ServeEngineNetwork(ctx context.Context, factory engine.Factory) error {
 
-func main() {
-	//create pipe for transforming video to suitable format
 	ffmpeg := exec.Command("ffmpeg", "-i", "pipe:0", "-pix_fmt", "bgr24", "-s", strconv.Itoa(frameX)+"x"+strconv.Itoa(frameY), "-f", "rawvideo", "pipe:1") //nolint
 	ffmpegIn, _ := ffmpeg.StdinPipe()
 	ffmpegOut, _ := ffmpeg.StdoutPipe()
@@ -46,11 +39,14 @@ func main() {
 	offerChannel := "offer"
 	responseChannel := "response"
 
-	ppl := webrtc.NewWebRtcPipeline(ffmpegIn, ffmpegOut, rdb, offerChannel, responseChannel)
+	ppl := NewWebRtcPipeline(FfmpegConfiguration{
+		In:  ffmpegIn,
+		Out: ffmpegOut,
+	}, &RedisConfiguration{Client: rdb, OfferC: offerChannel, AnswerC: responseChannel}, factory.NewEngine())
 	ppl.SetUpPeer()
 	ppl.ListenForIceConnection()
-	log.Printf("connected!")
 	ppl.PrintDescription()
 	ppl.RunSequential()
 
+	return nil
 }
