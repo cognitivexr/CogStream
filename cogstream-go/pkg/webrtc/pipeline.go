@@ -22,18 +22,27 @@ const (
 	frameSize = frameX * frameY * 3
 )
 
-type Pipeline struct {
-	config          *webrtc.Configuration
-	conn            *webrtc.PeerConnection
-	ivf             *ivfwriter.IVFWriter
-	out             io.Reader
-	engine          pipeline.Engine
-	rdb             *redis.Client
-	offerChannel    string
-	responseChannel string
+type FfmpegConfiguration struct {
+	In  io.Writer
+	Out io.Reader
 }
 
-func NewWebRtcPipeline(in io.Writer, out io.Reader, rdb *redis.Client, offerChannel string, responseChannel string) *Pipeline {
+type RedisConfiguration struct {
+	Client  *redis.Client
+	OfferC  string
+	AnswerC string
+}
+
+type Pipeline struct {
+	config *webrtc.Configuration
+	conn   *webrtc.PeerConnection
+	ivf    *ivfwriter.IVFWriter
+	out    io.Reader
+	engine pipeline.Engine
+	r      *RedisConfiguration
+}
+
+func NewWebRtcPipeline(ffmpegConf FfmpegConfiguration, redisConf *RedisConfiguration, engine pipeline.Engine) *Pipeline {
 	config := &webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
@@ -42,19 +51,18 @@ func NewWebRtcPipeline(in io.Writer, out io.Reader, rdb *redis.Client, offerChan
 		},
 	}
 
-	ivfWriter, err := ivfwriter.NewWith(in)
+	ivfWriter, err := ivfwriter.NewWith(ffmpegConf.In)
 	if err != nil {
 		panic(err)
 	}
 
 	p := Pipeline{
-		config:          config,
-		conn:            nil,
-		out:             out,
-		ivf:             ivfWriter,
-		rdb:             rdb,
-		offerChannel:    offerChannel,
-		responseChannel: responseChannel,
+		config: config,
+		conn:   nil,
+		out:    ffmpegConf.Out,
+		ivf:    ivfWriter,
+		r:      redisConf,
+		engine: engine,
 	}
 	return &p
 }
@@ -96,7 +104,7 @@ func (p *Pipeline) writeToIvf(track *webrtc.TrackRemote, receiver *webrtc.RTPRec
 
 func (p *Pipeline) waitForRemoteSessionDescription() string {
 	ctx := context.Background()
-	pubsub := p.rdb.Subscribe(ctx, p.offerChannel)
+	pubsub := p.r.Client.Subscribe(ctx, p.r.OfferC)
 	defer pubsub.Close()
 
 	for {
@@ -138,12 +146,11 @@ func (p *Pipeline) ListenForIceConnection() {
 
 func (p *Pipeline) PrintDescription() {
 	fmt.Println(util.Encode(*p.conn.LocalDescription()))
-	p.rdb.Publish(context.TODO(), p.responseChannel, util.Encode(*p.conn.LocalDescription()))
+	p.r.Client.Publish(context.TODO(), p.r.AnswerC, util.Encode(*p.conn.LocalDescription()))
 }
 
 func (p *Pipeline) RunSequential() {
-	window := gocv.NewWindow("received video")
-	defer window.Close()
+	runningId := 0
 
 	for {
 		buf := make([]byte, frameSize)
@@ -158,9 +165,7 @@ func (p *Pipeline) RunSequential() {
 		}
 
 		// TODO: plant in Engine here
-		window.IMShow(img)
-		if window.WaitKey(1) == 27 {
-			break
-		}
+		p.engine.Process(context.TODO(), &pipeline.Frame{FrameId: runningId, Mat: &img}, nil)
+		runningId += 1
 	}
 }

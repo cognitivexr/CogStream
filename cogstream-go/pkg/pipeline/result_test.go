@@ -34,7 +34,7 @@ func TestJsonResultWriter_WriteResult(t *testing.T) {
 		t.Errorf("unexpected error while writing result: %v", err)
 	}
 
-	packet := <- ch
+	packet := <-ch
 
 	log.Printf("FrameId: %d", packet.Header.FrameId)
 	if packet.Header.FrameId != 42 {
