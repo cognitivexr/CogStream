@@ -1,4 +1,4 @@
-package fps
+package stats
 
 import (
 	"cognitivexr.at/cogstream/api/engines"
@@ -8,7 +8,6 @@ import (
 	"cognitivexr.at/cogstream/pkg/pipeline"
 	"context"
 	"fmt"
-	"gocv.io/x/gocv"
 	"time"
 )
 
@@ -32,28 +31,33 @@ func (e *engineFactory) NewEngine() pipeline.Engine {
 	return NewEngine()
 }
 
-type fpsDisplaySink struct {
-	window        *gocv.Window
-	lastFrameTime time.Time
+type statsSink struct {
+	firstFrameTime time.Time
+	lastFrameTime  time.Time
+	frameCount     int
 }
 
 func NewEngine() pipeline.Engine {
-	return &fpsDisplaySink{
-		gocv.NewWindow("FPS display"),
-		time.Now(),
+	return &statsSink{
+		time.Time{},
+		time.Time{},
+		0,
 	}
 }
 
-func (w *fpsDisplaySink) Process(_ context.Context, frame *pipeline.Frame, _ pipeline.EngineResultWriter) error {
+func (w *statsSink) Process(_ context.Context, _ *pipeline.Frame, _ pipeline.EngineResultWriter) error {
+	w.frameCount += 1
 	currentFrameTime := time.Now()
+	if w.firstFrameTime.IsZero() {
+		w.firstFrameTime = currentFrameTime
+		w.lastFrameTime = currentFrameTime
+		return nil
+	}
 	timeBetween := currentFrameTime.Sub(w.lastFrameTime)
 	fps := 1 / timeBetween.Seconds()
-	fmt.Printf("fps: %v", fps)
-	w.window.IMShow(*frame.Mat)
-
-	if w.window.WaitKey(1) >= 0 {
-		return pipeline.Stop
-	}
+	cumulativeAverage := currentFrameTime.Sub(w.firstFrameTime).Seconds() / float64(w.frameCount)
+	fpsAvg := 1 / cumulativeAverage
+	fmt.Printf("FRAME %d\ncurr. fps: %v\nframetime: %v\ncumu. ftm: %v\navrg. fps: %v\n", w.frameCount, fps, timeBetween, cumulativeAverage, fpsAvg)
 
 	w.lastFrameTime = currentFrameTime
 	return nil
