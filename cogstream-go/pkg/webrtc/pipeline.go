@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	frameX    = 960
-	frameY    = 720
+	frameX    = 1920
+	frameY    = 1080
 	frameSize = frameX * frameY * 3
 )
 

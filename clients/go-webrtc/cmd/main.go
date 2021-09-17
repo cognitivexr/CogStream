@@ -27,7 +27,8 @@ func waitForRemoteSessionDescription(rdb *redis.Client, channel string) string {
 }
 
 func main() {
-	videoSrc := flag.String("video-src", "v4l2src device=/dev/video0 ! video/x-raw, width=1280, height=720 ! videoconvert ! queue", "GStreamer video src")
+	//videoSrc := flag.String("video-src", "v4l2src device=/dev/video0 ! video/x-raw, width=1280, height=720 ! videoconvert ! queue", "GStreamer video src")
+	videoSrc := flag.String("video-src", "uridecodebin uri=file:///home/vader/Videos/sample_1920x1080.mp4 ! videoscale ! video/x-raw, width=1920, height=1080 ! queue", "GStreamer video src")
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
