@@ -23,6 +23,11 @@ func main() {
 		return
 	}
 
+	// for debugging purposes
+	engines, err := platform.ListAvailableEngines()
+	doc, err := mediator.MarshalAvailableEngines(engines)
+	log.Info("plugins found: %s", doc)
+
 	wsm := app.NewWebsocketMediator(mediator.NewSimpleHandshakeStore(), platform)
 	wsm.AddOperationRequestHandler(mediator.DefaultOperationHandler)
 	wsm.AddFormatEstablishmentHandler(mediator.DefaultFormatHandler)

@@ -1,0 +1,8 @@
+{
+  "name": "debug",
+  "runtime": "cogstream-py",
+  "specification": {
+    "operation": "analyze",
+    "attributes": {}
+  }
+}

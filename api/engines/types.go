@@ -15,6 +15,7 @@ type Specification struct {
 
 type EngineDescriptor struct {
 	Name          string        `json:"name"`
+	Runtime       string        `json:"runtime"`
 	Specification Specification `json:"specification"`
 }
 

@@ -17,6 +17,7 @@ var EngineNotStarted = errors.New("engine not started")
 type Platform interface {
 	GetAvailableEngines(*HandshakeContext) (*messages.AvailableEngines, error)
 	GetStreamSpec(*HandshakeContext) (*messages.StreamSpec, error)
+	ListAvailableEngines() (*messages.AvailableEngines, error)
 }
 
 type DummyPlatform struct {
@@ -36,6 +37,20 @@ func NewPluginPlatform(pluginDir string) (Platform, error) {
 		runtime: engineRuntime,
 		finder:  engineRuntime,
 	}, nil
+}
+
+func (d *DummyPlatform) ListAvailableEngines() (*messages.AvailableEngines, error) {
+	foundEngines := d.finder.ListEngines()
+
+	availableEngines := &messages.AvailableEngines{Engines: make([]*messages.EngineSpec, 0)}
+
+	for _, engine := range foundEngines {
+		spec := &messages.EngineSpec{Attributes: messages.NewAttributes()}
+		mapAvailableEngines(engine, spec)
+		availableEngines.Engines = append(availableEngines.Engines, spec)
+	}
+
+	return availableEngines, nil
 }
 
 func (d *DummyPlatform) GetAvailableEngines(hs *HandshakeContext) (*messages.AvailableEngines, error) {

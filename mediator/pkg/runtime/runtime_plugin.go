@@ -9,7 +9,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
+	"path/filepath"
 	"plugin"
 	"reflect"
 	"strings"
@@ -18,7 +20,6 @@ import (
 
 type PluginEngine struct {
 	Path   string
-	Plugin *plugin.Plugin
 	Runner engines.PluginEngineRunner
 	Engine *engines.EngineDescriptor
 }
@@ -51,7 +52,21 @@ func OpenPluginEngine(pluginPath string) (*PluginEngine, error) {
 		return nil, fmt.Errorf("runner of plugin %s should be a PluginEngineRunner, but is a %v", spec.Name, reflect.TypeOf(symbol))
 	}
 
-	return &PluginEngine{pluginPath, pluginObj, *runner, spec}, nil
+	return &PluginEngine{
+		pluginPath,
+		*runner,
+		spec,
+	}, nil
+}
+
+func CreatePythonPluginEngine(descriptorPath string, descriptor *engines.EngineDescriptor) (*PluginEngine, error) {
+	pluginPath := path.Dir(descriptorPath)
+
+	return &PluginEngine{
+		pluginPath,
+		NewPythonRunner(pluginPath, descriptor),
+		descriptor,
+	}, nil
 }
 
 type runningEngineContext struct {
@@ -227,32 +242,63 @@ func ParseSpec(specFilePath string) (*engines.EngineDescriptor, error) {
 }
 
 func LoadPlugins(pluginDir string) ([]*PluginEngine, error) {
-	dir, err := ioutil.ReadDir(pluginDir)
-	if err != nil {
-		return nil, err
-	}
-
+	descriptors := make([]*engines.EngineDescriptor, 0)
+	paths := make([]string, 0)
 	plugins := make([]*PluginEngine, 0)
 
-	for _, f := range dir {
-		if f.IsDir() {
-			continue
-		}
-
-		if !strings.HasSuffix(f.Name(), ".spec.json") {
-			continue
-		}
-
-		pluginFile := strings.TrimSuffix(f.Name(), ".spec.json")
-		pluginPath := path.Join(pluginDir, pluginFile)
-
-		log.Info("loading plugin %s", pluginPath)
-		engine, err := OpenPluginEngine(pluginPath)
+	// recursively collect engine descriptors
+	filepath.Walk(pluginDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			log.Warn("error loading plugin %s: %s", pluginPath, err)
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(info.Name(), ".spec.json") {
+			return nil
+		}
+
+		descr, err := ParseSpec(path)
+		if err != nil {
+			log.Warn("error parsing stream spec of path %s: %s", path, err)
+		}
+		log.Info("found engine plugin descriptor: %s", descr)
+		descriptors = append(descriptors, descr)
+		paths = append(paths, path)
+		return nil
+	})
+
+	// load plugin engines
+	for i := 0; i < len(descriptors); i++ {
+		descr := descriptors[i]
+		descrFile := paths[i]
+
+		if descr.Runtime == "" {
+			if strings.HasSuffix(descrFile, ".so.spec.json") {
+				descr.Runtime = "cogstream-go-plugin"
+			} else {
+				log.Error("cannot guess plugin type for descriptor at %s: %s", descrFile, descr)
+				continue
+			}
+		}
+
+		if descr.Runtime == "cogstream-go-plugin" {
+			pluginPath := strings.TrimSuffix(descrFile, ".spec.json")
+			engine, err := OpenPluginEngine(pluginPath)
+
+			if err != nil {
+				log.Warn("error loading plugin %s: %s", pluginPath, err)
+				continue
+			}
+			plugins = append(plugins, engine)
 			continue
 		}
-		plugins = append(plugins, engine)
+
+		if descr.Runtime == "cogstream-py" {
+			continue
+		}
+
+		log.Error("don't know how to handle plugin runtime %s of descriptor %s", descr.Runtime, descrFile)
 	}
 
 	return plugins, nil

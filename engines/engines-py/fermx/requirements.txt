@@ -1,3 +1,3 @@
 ../../../cogstream-py
-#mxnet
+mxnet
 #mxnet-cu101==1.7
