@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"cognitivexr.at/cogstream/api/messages"
+	"cognitivexr.at/cogstream/mediator/pkg/log"
 	"context"
 	"path"
 	"sync"
@@ -19,13 +20,27 @@ func TestRunPlugin(t *testing.T) {
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
+	obs := make(chan messages.EngineAddress, 1)
 
 	go func() {
-		runner.Run(ctx, messages.OperationSpec{}, "0.0.0.0:45312")
+		runner.Run(ctx, obs, messages.OperationSpec{})
 		wg.Done()
 	}()
+
+	addr := <-obs
+	log.Info("engine address is %s", addr)
 
 	time.Sleep(10 * time.Second)
 	cancel()
 	wg.Wait()
+}
+
+func Test_parseEngineAddressFromLog(t *testing.T) {
+	line := "INFO:cogstream.engine.srv:started server socket on address ('0.0.0.0', 46699)"
+
+	addr, _ := parseEngineAddressFromLog(line)
+	if addr != "0.0.0.0:46699" {
+		t.Errorf("invalid address %s", addr)
+	}
+
 }

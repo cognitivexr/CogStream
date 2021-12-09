@@ -61,6 +61,7 @@ func OpenPluginEngine(pluginPath string) (*PluginEngine, error) {
 
 func CreatePythonPluginEngine(descriptorPath string, descriptor *engines.EngineDescriptor) (*PluginEngine, error) {
 	pluginPath := path.Dir(descriptorPath)
+	log.Info("loading python plugin engine in %s", pluginPath)
 
 	return &PluginEngine{
 		pluginPath,
@@ -178,16 +179,14 @@ func (p *pluginEngineRuntime) StartEngine(engine *engines.EngineDescriptor, spec
 	ctx.runningEngine.RuntimeId = runtimeId
 	ctx.ctx = context.WithValue(ctx.ctx, "attributes", spec.Attributes)
 
-	// TODO: how do we correctly determine the engine address?
-	addr := "0.0.0.0:53210"
-	ctx.runningEngine.Address = messages.EngineAddress(addr)
-
 	// TODO: mutex
 	p.runningEngines[runtimeId] = ctx
 
+	startupObserver := make(chan messages.EngineAddress, 1)
+
 	go func() {
 		// TODO: create and pass a specification
-		err := pluginEngine.Runner.Run(ctx.ctx, spec, addr)
+		err := pluginEngine.Runner.Run(ctx.ctx, startupObserver, spec)
 
 		if err != nil {
 			log.Error("error running engine %s: %s", runtimeId, err)
@@ -196,6 +195,9 @@ func (p *pluginEngineRuntime) StartEngine(engine *engines.EngineDescriptor, spec
 			log.Info("engine %s stopped", runtimeId)
 		}
 	}()
+
+	// wait for engine address to be determined by the plugin engine
+	ctx.runningEngine.Address = <-startupObserver
 
 	log.Info("waiting on engine %s(%s) to start", ctx.runningEngine.EngineDescriptor.Name, runtimeId)
 	// FIXME: should also return on context cancellation
@@ -282,6 +284,7 @@ func LoadPlugins(pluginDir string) ([]*PluginEngine, error) {
 			}
 		}
 
+		// engines using the go plugin system
 		if descr.Runtime == "cogstream-go-plugin" {
 			pluginPath := strings.TrimSuffix(descrFile, ".spec.json")
 			engine, err := OpenPluginEngine(pluginPath)
@@ -294,7 +297,14 @@ func LoadPlugins(pluginDir string) ([]*PluginEngine, error) {
 			continue
 		}
 
+		// engines using the python cogstream.engine.srv
 		if descr.Runtime == "cogstream-py" {
+			engine, err := CreatePythonPluginEngine(descrFile, descr)
+			if err != nil {
+				log.Warn("error loading plugin %s: %s", descrFile, err)
+				continue
+			}
+			plugins = append(plugins, engine)
 			continue
 		}
 

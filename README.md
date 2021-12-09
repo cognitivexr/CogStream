@@ -22,8 +22,8 @@ The build creates a `dist` folder that should look like this:
 
     dist
     ├── engines
-    │   ├── record.so
-    │   └── record.so.spec.json
+    │   ├── record.so
+    │   └── record.so.spec.json
     └── mediator
 
 Where `dist/engines` contains the engines as go plugins that are loaded by the mediator.
@@ -45,6 +45,18 @@ Handshake
 ---------
 
 TODO: document handshake
+
+### Example
+
+Run the mediator and connect to it via a websocket client:
+
+```
+websocat ws://localhost:8191
+> {"type":2,"content":{"code": "analyze", "attributes": {}}}
+< {"type":3,"content":{...}}
+> {"type":4,"content":{"engine": "fermx", "attributes": {}}}
+< {"type":5,"content":{"engineAddress":"0.0.0.0:37597","attributes": {...}}}
+```
 
 Streaming protocol
 ------------------

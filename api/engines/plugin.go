@@ -6,5 +6,5 @@ import (
 )
 
 type PluginEngineRunner interface {
-	Run(ctx context.Context, op messages.OperationSpec, address string) error
+	Run(ctx context.Context, startupObserver chan<- messages.EngineAddress, op messages.OperationSpec) error
 }
