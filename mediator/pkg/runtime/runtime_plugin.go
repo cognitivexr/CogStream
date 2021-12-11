@@ -196,10 +196,11 @@ func (p *pluginEngineRuntime) StartEngine(engine *engines.EngineDescriptor, spec
 		}
 	}()
 
+	log.Debug("waiting on engine %s(%s) to start", ctx.runningEngine.EngineDescriptor.Name, runtimeId)
 	// wait for engine address to be determined by the plugin engine
-	ctx.runningEngine.Address = <-startupObserver
 
-	log.Info("waiting on engine %s(%s) to start", ctx.runningEngine.EngineDescriptor.Name, runtimeId)
+	ctx.runningEngine.Address = <-startupObserver
+	log.Debug("got engine address. waiting for started to be called")
 	// FIXME: should also return on context cancellation
 	ctx.started.Wait()
 	log.Info("engine %s(%s) started", ctx.runningEngine.EngineDescriptor.Name, runtimeId)
@@ -243,7 +244,7 @@ func ParseSpec(specFilePath string) (*engines.EngineDescriptor, error) {
 	return &engine, nil
 }
 
-func LoadPlugins(pluginDir string) ([]*PluginEngine, error) {
+func LoadPlugins(pluginDirs ...string) ([]*PluginEngine, error) {
 	descriptors := make([]*engines.EngineDescriptor, 0)
 	paths := make([]string, 0)
 	plugins := make([]*PluginEngine, 0)
@@ -269,7 +270,9 @@ func LoadPlugins(pluginDir string) ([]*PluginEngine, error) {
 		paths = append(paths, path)
 		return nil
 	}
-	filepath.Walk(pluginDir, collectFileDescriptors)
+	for _, pluginDir := range pluginDirs {
+		filepath.Walk(pluginDir, collectFileDescriptors)
+	}
 
 	// load plugin engines
 	for i := 0; i < len(descriptors); i++ {
