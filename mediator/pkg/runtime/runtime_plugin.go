@@ -78,14 +78,14 @@ type runningEngineContext struct {
 }
 
 type pluginEngineRuntime struct {
-	pluginDir        string
+	pluginDirs       []string
 	availableEngines map[string]*PluginEngine
 	runningEngines   map[string]*runningEngineContext
 }
 
-func NewPluginEngineRuntime(pluginDir string) *pluginEngineRuntime {
+func NewPluginEngineRuntime(pluginDirs ...string) *pluginEngineRuntime {
 	return &pluginEngineRuntime{
-		pluginDir:        pluginDir,
+		pluginDirs:       pluginDirs,
 		availableEngines: make(map[string]*PluginEngine),
 		runningEngines:   make(map[string]*runningEngineContext),
 	}
@@ -94,7 +94,7 @@ func NewPluginEngineRuntime(pluginDir string) *pluginEngineRuntime {
 func (p *pluginEngineRuntime) LoadPlugins() error {
 	// TODO: mutex
 
-	plugins, err := LoadPlugins(p.pluginDir)
+	plugins, err := LoadPlugins(p.pluginDirs...)
 	if err != nil {
 		return err
 	}
@@ -303,7 +303,6 @@ func LoadPlugins(pluginDirs ...string) ([]*PluginEngine, error) {
 
 		// engines using the python cogstream.engine.srv
 		if descr.Runtime == "cogstream-py" {
-			log.Info("creating python plugin engine for")
 			engine, err := CreatePythonPluginEngine(descrFile, descr)
 			if err != nil {
 				log.Warn("error loading plugin %s: %s", descrFile, err)

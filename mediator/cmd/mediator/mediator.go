@@ -10,16 +10,20 @@ import (
 )
 
 func main() {
+	var pluginDirs AbsPathList
+
 	hostPtr := flag.String("host", "0.0.0.0", "host to bind to")
 	portPtr := flag.Int("port", 8191, "the server port")
-	pluginDirPtr := flag.String("engine-dir", "engines/",
-		"the directory containing engine plugins")
-
+	flag.Var(&pluginDirs, "plugins", "a directory containing engine plugins (can occur multiple times)")
 	flag.Parse()
 
-	platform, err := mediator.NewPluginPlatform(*pluginDirPtr)
+	if len(pluginDirs) == 0 {
+		pluginDirs = append(pluginDirs, "engines/")
+	}
+
+	platform, err := mediator.NewPluginPlatform(pluginDirs...)
 	if err != nil {
-		log.Fatalf("could not load plugins from %s: %s\n", *pluginDirPtr, err)
+		log.Fatalf("error loading plugins from path: %s\n", pluginDirs, err)
 		return
 	}
 

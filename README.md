@@ -29,17 +29,47 @@ The build creates a `dist` folder that should look like this:
 Where `dist/engines` contains the engines as go plugins that are loaded by the mediator.
 Run `(cd dist; ./mediator)` to start the mediator.
 
+### Python engines
+
+Python engines living in `engines/engines-py` that have a `.spec.json` file can also be loaded by the mediator.
+To do that, navigate into a specific engine, create a virtual environment, and install the dependencies.
+
+For example, to build the fermx engine, run:
+```bash
+cd engines/engines-py/fermx
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Then, when running the mediator, you can add the directory as `-plugins` argument.
+
+```bash
+dist/mediator -plugins dist/engines -plugins engines/engines-py
+```
 
 ### Clients
 
 To build and run the python client, run `cd clients/python` and execute `make venv`.
 Run `source .venv/bin/activate` to start the virtual environment.
-Then run
+
+#### Record a video
 
     python -m cogstream.cli.client --operation record
 
 to start a client that starts recording a video using the recorder engine.
 The videos are currently stored into `/tmp`.
+
+#### Interactive client
+
+The interactive python client allows you to select an engine and automatically stream the default camera to it
+
+    $ python -m interactive.main
+    0: EngineSpec(name='debug', attributes={'format.colorMode': ['0'], 'format.height': ['0'], 'format.width': ['0']})
+    1: EngineSpec(name='fermx', attributes={'format.colorMode': ['0'], 'format.height': ['0'], 'format.width': ['0']})
+    2: EngineSpec(name='record', attributes={'format.colorMode': ['0'], 'format.height': ['0'], 'format.width': ['0']})
+    which engine do you want to use?: 2
+
 
 Handshake
 ---------

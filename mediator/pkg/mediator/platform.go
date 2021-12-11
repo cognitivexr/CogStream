@@ -25,8 +25,8 @@ type DummyPlatform struct {
 	finder  runtime.EngineFinder
 }
 
-func NewPluginPlatform(pluginDir string) (Platform, error) {
-	engineRuntime := runtime.NewPluginEngineRuntime(pluginDir)
+func NewPluginPlatform(pluginDirs ...string) (Platform, error) {
+	engineRuntime := runtime.NewPluginEngineRuntime(pluginDirs...)
 	err := engineRuntime.LoadPlugins()
 
 	if err != nil {
