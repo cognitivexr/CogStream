@@ -249,7 +249,7 @@ func LoadPlugins(pluginDir string) ([]*PluginEngine, error) {
 	plugins := make([]*PluginEngine, 0)
 
 	// recursively collect engine descriptors
-	filepath.Walk(pluginDir, func(path string, info os.FileInfo, err error) error {
+	collectFileDescriptors := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -268,7 +268,8 @@ func LoadPlugins(pluginDir string) ([]*PluginEngine, error) {
 		descriptors = append(descriptors, descr)
 		paths = append(paths, path)
 		return nil
-	})
+	}
+	filepath.Walk(pluginDir, collectFileDescriptors)
 
 	// load plugin engines
 	for i := 0; i < len(descriptors); i++ {
@@ -299,6 +300,7 @@ func LoadPlugins(pluginDir string) ([]*PluginEngine, error) {
 
 		// engines using the python cogstream.engine.srv
 		if descr.Runtime == "cogstream-py" {
+			log.Info("creating python plugin engine for")
 			engine, err := CreatePythonPluginEngine(descrFile, descr)
 			if err != nil {
 				log.Warn("error loading plugin %s: %s", descrFile, err)
