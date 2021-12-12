@@ -1,7 +1,7 @@
 package cluster
 
 import (
-	"cognitivexr.at/cogstream/api/messages"
+	"cognitivexr.at/cogstream/api/engines"
 	"cognitivexr.at/cogstream/mediator/pkg/log"
 	"testing"
 	"time"
@@ -12,11 +12,9 @@ func TestCluster(t *testing.T) {
 
 	time.AfterFunc(1*time.Second, func() {
 		info := &NodeInfo{
-			NodeId:        "hello",
-			WebsocketPort: 9501,
-			AvailableEngines: messages.AvailableEngines{
-				Engines: make([]*messages.EngineSpec, 10),
-			},
+			NodeId:  "hello",
+			RpcPort: 9501,
+			Engines: make([]*engines.EngineDescriptor, 0),
 		}
 
 		log.Info("creating new cluster connection")

@@ -46,7 +46,7 @@ func (w *WorkerConnection) WebsocketAddress() (string, error) {
 
 	parts := strings.Split(s, ":")
 
-	return fmt.Sprintf("%s:%d", parts[0], w.info.WebsocketPort), nil
+	return fmt.Sprintf("%s:%d", parts[0], w.info.RpcPort), nil
 }
 
 func (w *WorkerConnection) IsAlive() bool {

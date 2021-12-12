@@ -1,15 +1,15 @@
 package cluster
 
 import (
-	"cognitivexr.at/cogstream/api/messages"
+	"cognitivexr.at/cogstream/api/engines"
 )
 
 type NodeId string
 
 type NodeInfo struct {
-	NodeId           NodeId                    `json:"nodeId"`
-	WebsocketPort    int                       `json:"websocketPort"`
-	AvailableEngines messages.AvailableEngines `json:"availableEngines"`
+	NodeId  NodeId                      `json:"nodeId"`
+	RpcPort int                         `json:"rpcPort"`
+	Engines []*engines.EngineDescriptor `json:"engines"`
 }
 
 const Heartbeat string = "ping"

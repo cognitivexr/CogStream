@@ -21,8 +21,8 @@ type EngineDescriptor struct {
 
 type RunningEngine struct {
 	EngineDescriptor
-	RuntimeId string
-	Address   messages.EngineAddress
-	Started   time.Time
-	Stopped   time.Time
+	RuntimeId string                 `json:"runtimeId"`
+	Address   messages.EngineAddress `json:"address"`
+	Started   time.Time              `json:"started"`
+	Stopped   time.Time              `json:"stopped"`
 }
