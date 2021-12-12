@@ -43,13 +43,6 @@ func NewSimpleHandshakeStore() HandshakeStore {
 		timeout: timeout,
 	}
 
-	// FIXME not ideal
-	//go func() {
-	//	for range time.Tick(timeout) {
-	//		store.expire()
-	//	}
-	//}()
-	// FIXED:
 	time.AfterFunc(timeout, func() {
 		store.expire()
 	})
