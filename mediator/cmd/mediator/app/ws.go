@@ -8,7 +8,9 @@ import (
 	"github.com/gorilla/websocket"
 	"io"
 	"log"
+	"net"
 	"net/http"
+	"strings"
 )
 
 type WebsocketMediator struct {
@@ -83,6 +85,9 @@ func (wm *WebsocketMediator) startCommunication(hs *mediator.HandshakeContext, c
 		log.Printf("cannot establish format: %v", err)
 		return
 	}
+
+	specifyEngineAddress(c, hs.StreamSpec)
+
 	reply, err = mediator.MarshalStreamSpec(hs.StreamSpec)
 	if err != nil {
 		log.Printf("cannot marshal engine format spec: %v", err)
@@ -92,6 +97,13 @@ func (wm *WebsocketMediator) startCommunication(hs *mediator.HandshakeContext, c
 	if err != nil {
 		log.Printf("cannot write reply: %v", err)
 		return
+	}
+}
+
+func specifyEngineAddress(c *websocket.Conn, spec *messages.StreamSpec) {
+	if tcpAddr, ok := c.LocalAddr().(*net.TCPAddr); ok {
+		ip := strings.Replace(string(spec.EngineAddress), "0.0.0.0", tcpAddr.IP.String(), 1)
+		spec.EngineAddress = messages.EngineAddress(ip)
 	}
 }
 
