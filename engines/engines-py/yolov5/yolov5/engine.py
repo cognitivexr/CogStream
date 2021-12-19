@@ -58,7 +58,7 @@ class Yolov5(Engine):
         if self.device is None:
             self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).autoshape()
+        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
         self.model.to(self.device)
         self.names = self.model.module.names if hasattr(self.model, 'module') else self.model.names
 

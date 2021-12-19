@@ -1,0 +1,8 @@
+{
+  "name": "yolov5",
+  "runtime": "cogstream-py",
+  "specification": {
+    "operation": "analyze",
+    "attributes": {}
+  }
+}
