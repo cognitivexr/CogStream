@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 var EngineNotFound = errors.New("engine not found")
@@ -108,5 +109,6 @@ func (d *DummyPlatform) GetStreamSpec(hs *HandshakeContext) (*messages.StreamSpe
 	}
 
 	// TODO:
-	return &messages.StreamSpec{EngineAddress: runningEngine.Address, Attributes: attrs}, nil
+	address := strings.Replace(string(runningEngine.Address), "0.0.0.0", "127.0.0.1", 1)
+	return &messages.StreamSpec{EngineAddress: messages.EngineAddress(address), Attributes: attrs}, nil
 }

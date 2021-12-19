@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"plugin"
 	"reflect"
@@ -60,7 +59,7 @@ func OpenPluginEngine(pluginPath string) (*PluginEngine, error) {
 }
 
 func CreatePythonPluginEngine(descriptorPath string, descriptor *engines.EngineDescriptor) (*PluginEngine, error) {
-	pluginPath := path.Dir(descriptorPath)
+	pluginPath := filepath.Dir(descriptorPath)
 	log.Info("loading python plugin engine in %s", pluginPath)
 
 	return &PluginEngine{
@@ -265,13 +264,18 @@ func LoadPlugins(pluginDirs ...string) ([]*PluginEngine, error) {
 		if err != nil {
 			log.Warn("error parsing stream spec of path %s: %s", path, err)
 		}
-		log.Info("found engine plugin descriptor: %s", descr)
+		log.Info("found engine plugin descriptor in %s: %s", path, descr)
 		descriptors = append(descriptors, descr)
 		paths = append(paths, path)
 		return nil
 	}
 	for _, pluginDir := range pluginDirs {
-		filepath.Walk(pluginDir, collectFileDescriptors)
+		absPath, err := filepath.Abs(pluginDir)
+		if err != nil {
+			log.Error("error resolving %s into absolute path", pluginDir)
+			absPath = pluginDir
+		}
+		filepath.Walk(absPath, collectFileDescriptors)
 	}
 
 	// load plugin engines
