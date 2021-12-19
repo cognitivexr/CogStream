@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	goruntime "runtime"
 	"strings"
 	"sync"
 )
@@ -76,11 +77,16 @@ func (p *engineProcess) Run(ctx context.Context, startupObserver chan<- messages
 		return errors.New("process has already been started")
 	}
 
+	var pythonCommand string
 	// if the plugin is self-contained in a venv then we use the python3 bin from the venv
-	pythonCommand := path.Join(p.modulePath, ".venv", "bin", "python3")
+	if goruntime.GOOS == "windows" {
+		pythonCommand = path.Join(p.modulePath, ".venv", "Scripts", "python.exe")
+	} else {
+		pythonCommand = path.Join(p.modulePath, ".venv", "bin", "python")
+	}
 
+	log.Info("checking for existence of python command in %s", pythonCommand)
 	if _, err := os.Stat(pythonCommand); errors.Is(err, os.ErrNotExist) {
-		// otherwise we'll use the system-wide python binary
 		pythonCommand = "/usr/bin/python3"
 	}
 
