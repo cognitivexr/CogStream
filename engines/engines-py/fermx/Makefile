@@ -18,6 +18,6 @@ start:
 	$(VENV_RUN); python -m fermx.main
 
 clean:
-	rm -rf $(VENV_RUN)
+	rm -rf $(VENV_DIR)
 
 
