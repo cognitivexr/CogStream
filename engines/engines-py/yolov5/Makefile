@@ -18,4 +18,4 @@ start:
 	$(VENV_RUN); python -m yolov5.main
 
 clean:
-	rm -rf $(VENV_RUN)
+	rm -rf $(VENV_DIR)
