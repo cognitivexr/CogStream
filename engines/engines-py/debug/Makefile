@@ -17,4 +17,7 @@ install: venv
 start:
 	$(VENV_RUN); python -m debug.main
 
+clean: 
+	rm -rf $(VENV_DIR)
+
 

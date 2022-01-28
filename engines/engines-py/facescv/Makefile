@@ -17,4 +17,5 @@ install: venv
 start:
 	$(VENV_RUN); python -m facescv.main
 
-
+clean: 
+	rm -rf $(VENV_DIR)
