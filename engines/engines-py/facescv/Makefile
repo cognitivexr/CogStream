@@ -15,6 +15,6 @@ install: venv
 	$(VENV_RUN); $(PIP_CMD) install -r requirements.txt
 
 start:
-	$(VENV_RUN); python -m yolov5.main
+	$(VENV_RUN); python -m facescv.main
 
 
