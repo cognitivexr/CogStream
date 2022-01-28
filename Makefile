@@ -1,4 +1,4 @@
-.PHONY: mediator engines clean all
+.PHONY: mediator engines engines-py engines-go clean all 
 
 BUILD_DIR=dist/
 
@@ -8,8 +8,15 @@ mediator:
 	$(MAKE) -C mediator all BUILD_DIR=../$(BUILD_DIR)
 	GOOS=windows GOARCH=amd64 $(MAKE) -C mediator all BUILD_DIR=../$(BUILD_DIR)
 
-engines:
+engines-go:
 	GOARCH=amd64 $(MAKE) -C engines/engines-go all BUILD_DIR=../../$(BUILD_DIR)engines/
+
+engines-py:
+	cd engines/engines-py; $(MAKE) install
+
+engines: engines-go engines-py
 
 clean:
 	rm -rf $(BUILD_DIR)
+	cd engines/engines-py; $(MAKE) clean 
+
