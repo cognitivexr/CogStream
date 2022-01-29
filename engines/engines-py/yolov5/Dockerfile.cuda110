@@ -1,0 +1,28 @@
+FROM pytorch/pytorch:1.7.1-cuda11.0-cudnn8-runtime
+
+RUN apt-get update
+
+# configure tzdata (which otherwise involves interaction via stdin)
+RUN export DEBIAN_FRONTEND=noninteractive
+RUN apt-get install -y tzdata
+RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+RUN dpkg-reconfigure --frontend noninteractive tzdata
+
+# install base engine dependencies (opencv, python is already installed)
+RUN apt install -y \
+    libopencv-contrib3.2 \
+    libopencv-core3.2 \
+    libopencv-imgcodecs3.2 \
+    libopencv-imgproc3.2 \
+    libopencv-shape3.2
+
+COPY ./requirements.txt ./requirements.txt
+RUN sed -i "s/..\/..\/..\///g" requirements.txt
+RUN pip install -r requirements.txt
+
+# default engine port
+EXPOSE 54321
+
+# engine code
+COPY yolov5 ./yolov5
+CMD python3 -m yolov5.main
