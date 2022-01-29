@@ -1,6 +1,9 @@
 {
   "name": "debug",
-  "runtime": "cogstream-py",
+  "runtime": "cogstream-docker",
+  "config": {
+    "image": "<TODO>"
+  },
   "specification": {
     "operation": "analyze",
     "attributes": {}
