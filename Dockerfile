@@ -1,44 +1,43 @@
 # syntax=docker/dockerfile:1
 
-##
-## Build go
-##
-#FROM golang:1.16-buster AS build
-#
-#WORKDIR /app
-#
-# ....
-#RUN make engines-go
+FROM debian:buster
 
+RUN apt-get update
 
-##
-## Build python
-##
-FROM python:3.8-slim-buster as build-py
+# set noninteractive installation
+ENV DEBIAN_FRONTEND "noninteractive"
+# install tzdata package
+RUN apt-get install -y tzdata
+# set your timezone
+RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+RUN dpkg-reconfigure --frontend noninteractive tzdata
 
-RUN apt-get update && apt-get install make
+RUN apt-get install -y \
+    bzip2 \
+    g++ \
+    git \
+    libgl1-mesa-glx \
+    libhdf5-dev \
+    openmpi-bin \
+    wget \
+    python3 \
+    python3-dev \
+    python3-pip \
+    python3-tk \
+    python3-opencv
 
-WORKDIR /engines
+RUN wget https://go.dev/dl/go1.17.6.linux-amd64.tar.gz
 
-COPY . .
+RUN tar -xvf go1.17.6.linux-amd64.tar.gz 
 
-# RUN make engines-py
+RUN mv go /usr/local
 
-WORKDIR /engines/engines-py/debug
+ENV GOROOT "/usr/local/go"
 
-RUN make install
+ENV GOPATH "$HOME/go"
 
-CMD ["make", "start" ]
+ENV PATH "$GOPATH/bin:$GOROOT/bin:$PATH"
 
-##
-## Deploy
-##
-#FROM python:3.8-slim-buster
-#
-#WORKDIR /
-#
-#COPY --from=build-py ...
-#
-#
-#ENTRYPOINT [""] ... mediator
+RUN go version
 
+RUN go env
