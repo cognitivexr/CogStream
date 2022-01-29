@@ -2,7 +2,7 @@
   "name": "yolov5",
   "runtime": "cogstream-docker",
   "config": {
-    "image": "<TODO>"
+    "image": "cognitivexr/engine-yolov5:cpu"
   },
   "specification": {
     "operation": "analyze",
