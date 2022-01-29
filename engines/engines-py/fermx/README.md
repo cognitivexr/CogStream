@@ -22,6 +22,16 @@ nvcc --version
 pip install mxnet-cu<version>
 ```
 
+## Build Docker images
+
+### CPU
+
+    docker build -f Dockerfile -t cognitivexr/engine-fermx:cpu .
+
+### GPU acceleration (CUDA 11.0)
+
+    docker build -f Dockerfile.cuda110 -t cognitivexr/engine-fermx:cuda-110 .
+
 ## Copyright
 
 The copyright of the packaged MXNet code (`fermx/model`) is held by Amazon.com under the Apache License, Version 2.0.
