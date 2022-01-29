@@ -69,6 +69,17 @@ func CreatePythonPluginEngine(descriptorPath string, descriptor *engines.EngineD
 	}, nil
 }
 
+func CreateDockerEngine(descriptorPath string, descriptor *engines.EngineDescriptor) (*PluginEngine, error) {
+	pluginPath := filepath.Dir(descriptorPath)
+	log.Info("loading docker plugin engine in %s", pluginPath)
+
+	return &PluginEngine{
+		pluginPath,
+		NewDockerRunner(pluginPath, descriptor),
+		descriptor,
+	}, nil
+}
+
 type runningEngineContext struct {
 	runningEngine *engines.RunningEngine
 	ctx           context.Context
@@ -310,6 +321,16 @@ func LoadPlugins(pluginDirs ...string) ([]*PluginEngine, error) {
 			engine, err := CreatePythonPluginEngine(descrFile, descr)
 			if err != nil {
 				log.Warn("error loading plugin %s: %s", descrFile, err)
+				continue
+			}
+			plugins = append(plugins, engine)
+			continue
+		}
+
+		if descr.Runtime == "cogstream-docker" {
+			engine, err := CreateDockerEngine(descrFile, descr)
+			if err != nil {
+				log.Warn("error loading plug %s: %s", descrFile, err)
 				continue
 			}
 			plugins = append(plugins, engine)

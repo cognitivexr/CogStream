@@ -1,0 +1,8 @@
+{
+  "name": "fermx",
+  "runtime": "cogstream-py",
+  "specification": {
+    "operation": "analyze",
+    "attributes": {}
+  }
+}
