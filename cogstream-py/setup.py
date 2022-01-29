@@ -14,7 +14,7 @@ with open("requirements.txt", "r") as fh:
 
 setuptools.setup(
     name="cogstream-py",
-    version="0.0.1.dev1",
+    version="0.1.0",
     author="Thomas Rausch",
     author_email="thomas@cognitivexr.at",
     description="CogStream: AI-based video analytics system",
