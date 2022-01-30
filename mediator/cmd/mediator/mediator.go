@@ -7,8 +7,11 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 )
 
 type AbsPathList []string
@@ -24,6 +27,16 @@ func (l *AbsPathList) Set(value string) (err error) {
 	}
 	*l = append(*l, value)
 	return
+}
+
+func SetupCloseHandler() {
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println("\r- Ctrl+C pressed in Terminal")
+		os.Exit(0)
+	}()
 }
 
 func main() {
@@ -43,6 +56,17 @@ func main() {
 		log.Fatalf("error loading plugins from path: %s\n", pluginDirs, err)
 		return
 	}
+	interrupted := make(chan os.Signal)
+	signal.Notify(interrupted, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-interrupted
+		err := platform.ShutdownEngines()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Info("bye bye")
+		os.Exit(0)
+	}()
 
 	// for debugging purposes
 	engines, err := platform.ListAvailableEngines()

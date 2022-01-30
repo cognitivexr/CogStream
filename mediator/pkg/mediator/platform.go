@@ -18,6 +18,7 @@ type Platform interface {
 	GetAvailableEngines(*HandshakeContext) (*messages.AvailableEngines, error)
 	GetStreamSpec(*HandshakeContext) (*messages.StreamSpec, error)
 	ListAvailableEngines() (*messages.AvailableEngines, error)
+	ShutdownEngines() error
 }
 
 type DummyPlatform struct {
@@ -68,6 +69,16 @@ func (d *DummyPlatform) GetAvailableEngines(hs *HandshakeContext) (*messages.Ava
 	}
 
 	return availableEngines, nil
+}
+
+func (d *DummyPlatform) ShutdownEngines() error {
+	log.Info("test")
+	err := error(nil)
+	for i, runningEngine := range d.runtime.ListRunning() {
+		log.Info("stopping engine %d: %v", i, runningEngine)
+		err = d.runtime.StopEngine(runningEngine)
+	}
+	return err
 }
 
 func mapAvailableEngines(engine *engines.EngineDescriptor, engineSpec *messages.EngineSpec) {
