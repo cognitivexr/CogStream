@@ -14,10 +14,10 @@ type Specification struct {
 }
 
 type EngineDescriptor struct {
-	Name          string              `json:"name"`
-	Runtime       string              `json:"runtime"`
-	RuntimeConfig messages.Attributes `json:"runtime-config"`
-	Specification Specification       `json:"specification"`
+	Name          string            `json:"name"`
+	Runtime       string            `json:"runtime"`
+	RuntimeConfig map[string]string `json:"runtime-config"`
+	Specification Specification     `json:"specification"`
 }
 
 type RunningEngine struct {

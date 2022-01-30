@@ -1,7 +1,7 @@
 {
   "name": "fermx",
   "runtime": "cogstream-docker",
-  "config": {
+  "runtime-config": {
     "image": "cognitivexr/engine-fermx:cpu"
   },
   "specification": {

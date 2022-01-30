@@ -1,8 +1,8 @@
 {
   "name": "debug",
   "runtime": "cogstream-docker",
-  "config": {
-    "image": "cognitivexr/engine-debug:cpu"
+  "runtime-config": {
+    "image": "cognitivexr/engine-debug"
   },
   "specification": {
     "operation": "analyze",
