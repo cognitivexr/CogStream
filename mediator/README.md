@@ -25,45 +25,61 @@ The messages are JSON-encoded and consist of the following fields:
 
 * `OperationSpec`
     ```json
-        {
-            "code": <str>,
-            "attributes": {
-                <str>: [<str>, ...]
-            }
+    {
+        "code": <str>,
+        "attributes": {
+            <str>: [<str>, ...]
         }
+    }
     ```
 * `EngineSpec`
     ```json
-        {
-            "name": <str>,
-            "attributes": {
-                <str>: [<str>, ...]
-            }
+    {
+        "name": <str>,
+        "attributes": {
+            <str>: [<str>, ...]
         }
+    }
     ```
 * `AvailableEngines`
     ```json
-        {
-            "engines": [<EngineSpec>],
-        }
+    {
+        "engines": [<EngineSpec>],
+    }
     ```
 * `ClientFormatSpec`
     ```json
-        {
-            "engine": <str>,
-            "attributes": {
-                <str>: [<str>, ...]
-            }
+    {
+        "engine": <str>,
+        "attributes": {
+            <str>: [<str>, ...]
         }
+    }
     ```
+    
+    Example: to indicate to the mediator the stream format, the following attributes must be specified:
+    ```json
+    {
+        "engine": "fermx",
+        "attributes": {
+            "format.width": 800,
+            "format.height": 600,
+            "format.colorMode": 4,
+            "format.orientation": 3,
+        }
+    }
+    ```
+    Where colorMode and orientation refer to the respective CogStream format objects defined [here](https://github.com/cognitivexr/CogStream/blob/master/api/format/core.go).
+    
+    
 * `StreamSpec`
     ```json
-        {
-            "engineAdress": <str>,
-            "attributes": {
-                <str>: [<str>, ...]
-            }
+    {
+        "engineAdress": <str>,
+        "attributes": {
+            <str>: [<str>, ...]
         }
+    }
     ```
  
 
