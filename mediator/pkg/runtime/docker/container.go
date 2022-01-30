@@ -6,6 +6,7 @@ import (
 	"cognitivexr.at/cogstream/mediator/pkg/log"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -101,6 +102,20 @@ func (c *engineContainer) Wait() error {
 	return c.err
 }
 
+func checkHostAvailable(address string, timeout time.Duration) error {
+	conn, err := net.DialTimeout("tcp", address, timeout)
+	if err != nil {
+		return fmt.Errorf("engine not available: %s", err)
+	}
+	if conn != nil {
+		defer conn.Close()
+		log.Debug("engine available: %s", address)
+	}
+	// TODO needs to be removed still.
+	time.Sleep(time.Second)
+	return nil
+}
+
 func (c *engineContainer) Run(ctx context.Context, startupObserver chan<- messages.EngineAddress, op messages.OperationSpec) error {
 	// TODO: containers are never removed
 
@@ -161,12 +176,11 @@ func (c *engineContainer) Run(ctx context.Context, startupObserver chan<- messag
 	c.address = engineHost + ":" + enginePort
 	c.notifyAddress(startupObserver)
 
-	// FIXME: we don't *really* know whether the engine has started. technically the
-	//  engine would have to communicate that somehow, which we don't generally do. we
-	//  could find out for python engines by looking at the log the way the python
-	//  runtime does, but that doesn't generalize.
-	time.Sleep(10 * time.Second)
-	// TODO: one way would be to try to the engine address until it is up
+	err = checkHostAvailable(c.address, time.Minute)
+	if err != nil {
+		return fmt.Errorf("engine took too long to start: %s", err)
+	}
+
 	c.notifyStarted(ctx)
 
 	c.mutex.Unlock()
