@@ -63,6 +63,14 @@ Then, when running the mediator, you can add the directory as `-plugins` argumen
 dist/mediator -plugins dist/engines -plugins engines/engines-py
 ```
 
+### Docker Engines
+
+We can package engines as Docker containers, and then use that as an abstraction to serve them.
+For the python engines, there are instructions on how to build the container images.
+There are both Dockerfiles to create normal images, as well as ones to create GPU-accelerated containers using [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda) as base.
+
+The engine plugin files to start engines as docker containers can be found in `engines/engines-docker`.
+
 ### Clients
 
 To build and run the python client, run `cd clients/python` and execute `make venv`.
