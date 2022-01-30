@@ -29,6 +29,21 @@ The build creates a `dist` folder that should look like this:
 Where `dist/engines` contains the engines as go plugins that are loaded by the mediator.
 Run `(cd dist; ./mediator)` to start the mediator.
 
+
+#### Mediator using Docker
+
+Build the go docker image:
+
+    docker build -f build/mediator/Dockerfile -t cognitivexr/cogstream-mediator
+
+Run the docker container using the container engines (currently only works reliably with host mode because of engine addressing)
+
+    docker run --rm -it \
+        --network=host \
+        -v $(pwd)/engines/engines-docker:/cogstream/engines \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        cognitivexr/cogstream-mediator:latest
+
 ### Python engines
 
 Python engines living in `engines/engines-py` that have a `.spec.json` file can also be loaded by the mediator.
