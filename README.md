@@ -97,19 +97,9 @@ The interactive python client allows you to select an engine and automatically s
 Handshake
 ---------
 
-TODO: document handshake
-
-### Example
-
-Run the mediator and connect to it via a websocket client:
-
-```
-websocat ws://localhost:8191
-> {"type":2,"content":{"code": "analyze", "attributes": {}}}
-< {"type":3,"content":{...}}
-> {"type":4,"content":{"engine": "fermx", "attributes": {}}}
-< {"type":5,"content":{"engineAddress":"0.0.0.0:37597","attributes": {...}}}
-```
+Each connection of a CogStream client with an engine starts with a websocket connection to the mediator.
+Inside the websocket connection 2 message exchanges happen, thus performing the handshake.
+More information about the handshake can be found [here](https://github.com/cognitivexr/CogStream/tree/main/mediator).
 
 Streaming protocol
 ------------------

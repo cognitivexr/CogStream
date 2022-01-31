@@ -23,7 +23,8 @@ After the handshake the client continues to communicate with the engine, i.e. de
 
 The messages are JSON-encoded and consist of the following fields:
 
-* `OperationSpec`
+- `OperationSpec`
+
     ```json
     {
         "code": <str>,
@@ -32,7 +33,9 @@ The messages are JSON-encoded and consist of the following fields:
         }
     }
     ```
-* `EngineSpec`
+
+- `EngineSpec`
+
     ```json
     {
         "name": <str>,
@@ -41,13 +44,17 @@ The messages are JSON-encoded and consist of the following fields:
         }
     }
     ```
-* `AvailableEngines`
+
+- `AvailableEngines`
+
     ```json
     {
         "engines": [<EngineSpec>],
     }
     ```
-* `ClientFormatSpec`
+
+- `ClientFormatSpec`
+
     ```json
     {
         "engine": <str>,
@@ -56,8 +63,9 @@ The messages are JSON-encoded and consist of the following fields:
         }
     }
     ```
-    
+
     Example: to indicate to the mediator the stream format, the following attributes must be specified:
+
     ```json
     {
         "engine": "fermx",
@@ -69,10 +77,11 @@ The messages are JSON-encoded and consist of the following fields:
         }
     }
     ```
-    Where colorMode and orientation refer to the respective CogStream format objects defined [here](https://github.com/cognitivexr/CogStream/blob/master/api/format/core.go).
-    
-    
-* `StreamSpec`
+
+    Where `colorMode` and `orientation` refer to the respective CogStream format objects defined [here](https://github.com/cognitivexr/CogStream/blob/master/api/format/core.go).
+
+- `StreamSpec`
+
     ```json
     {
         "engineAdress": <str>,
@@ -81,7 +90,18 @@ The messages are JSON-encoded and consist of the following fields:
         }
     }
     ```
- 
+
+### Example
+
+Run the mediator and connect to it via a websocket client:
+
+```bash
+websocat ws://localhost:8191
+> {"type":2,"content":{"code": "analyze", "attributes": {}}}
+< {"type":3,"content":{...}}
+> {"type":4,"content":{"engine": "fermx", "attributes": {}}}
+< {"type":5,"content":{"engineAddress":"0.0.0.0:37597","attributes": {...}}}
+```
 
 ### Alternative prototypical WebRTC-based connection establishment
 
