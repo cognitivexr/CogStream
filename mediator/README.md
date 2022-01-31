@@ -105,7 +105,7 @@ websocat ws://localhost:8191
 
 ### Alternative prototypical WebRTC-based connections
 
-Alternatively to using the custom TCP-based protocol involving the handshake, we also have experimented with a WebRTC-based approach (see [webrtc-pipeline branch](/cognitivexr/CogStream/tree/webrtc-pipeline)).
+Alternatively to using the custom TCP-based protocol involving the handshake, we also have experimented with a WebRTC-based approach (see [webrtc-pipeline branch](https://github.com/cognitivexr/CogStream/tree/webrtc-pipeline/)).
 Here, the entire handshake is redundant and replaced by the mechanisms in WebRTC.
 We use the [WebRTC implementation from Pion](https://github.com/pion/webrtc), which also provides a [comprehensive explanation](https://webrtcforthecurious.com/) on how connections are established with this protocol/networking stack.
 
